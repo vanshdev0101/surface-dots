@@ -503,7 +503,7 @@ Rectangle {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
         onClicked: {
-            Quickshell.execDetached(["bash", "-lc", "/home/snes/.config/quickshell/top-bar/now_playing/now_playing"])
+            Quickshell.execDetached(["bash", "-lc", "/home/vanshc/.config/quickshell/top-bar/now_playing/now_playing"])
             root.closeRequested()
         }
     }

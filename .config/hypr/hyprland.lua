@@ -4,7 +4,7 @@
 
 local mod     = "SUPER"
 local alt     = "ALT"
-local home    = os.getenv("HOME") or "/home/snes"
+local home    = os.getenv("HOME") or "/home/vanshc"
 local scripts = home .. "/.config/hypr/scripts"
 
 -- Import Shader Manager and Inject Core
@@ -15,21 +15,24 @@ local shader = require("shader")
 -- =========================================================================
 hl.monitor({
     output   = "eDP-1",
-    mode     = "2256x1504@60",
+    mode     = "2560x1440@60",
     position = "0x0",
-    scale    = 1,
+    scale    = 1.6,
+    bitdepth = 10
 })
+
 hl.monitor({
-    output   = "DP-1",
-    mode     = "2560x1440@60", -- 3840x2160
-    position = "1920x0",
-    scale    = 1.33,
+    output   = "HDMI-A-1",
+    mode     = "1920x1080@144",
+    position = "1600x0",
+    scale    = 1
 })
+
 
 -- =========================================================================
 -- Environment Variables
 -- =========================================================================
--- Cursor: 
+-- Cursor:
 local function theme_mode()
     local f = io.open(home .. "/.cache/quickshell/theme_mode", "r")
     if not f then return "dark" end
@@ -38,43 +41,42 @@ local function theme_mode()
     return m:gsub("%s+", "") == "light" and "light" or "dark"
 end
 
-local cursor_theme = theme_mode() == "light" and "Saturnian-Day" or "Saturnian-Night"
+local cursor_theme = "Adwaita"
 
 hl.env("HYPRCURSOR_THEME", cursor_theme)
-hl.env("HYPRCURSOR_SIZE",  "32")
+hl.env("HYPRCURSOR_SIZE",  "24")
 hl.env("XCURSOR_THEME",    cursor_theme)
-hl.env("XCURSOR_SIZE",     "32")
-hl.env("GDK_SCALE",       "2")
+hl.env("XCURSOR_SIZE",     "24")
 hl.env("GDK_BACKEND",     "wayland,x11,*")
 hl.env("CLUTTER_BACKEND", "wayland")
 hl.env("TERMINAL",        "kitty")
 hl.env("QT_QPA_PLATFORMTHEME", "kde")
 hl.env("QT_STYLE_OVERRIDE",    "kvantum")
+hl.env("PAPEL_DIR", home .. "/Pictures/wallpapers")
 hl.env("QT_QPA_PLATFORM",      "wayland;xcb")
 
 -- =========================================================================
 -- Autostart
 -- =========================================================================
 hl.on("hyprland.start", function()
-    hl.exec_cmd("sleep 1 && mpv --no-video --volume=100 " .. home .. "/.config/hypr/sounds/startup.wav")
-    shader.toggle("Main")
+    -- Essential/reliable commands first, so a later failure can never block these
+    hl.exec_cmd("qs -c top-bar")
+    hl.exec_cmd("awww-daemon")
+    hl.exec_cmd("hypridle")
     hl.exec_cmd("dunst")
     hl.exec_cmd("blueman-applet")
-    hl.exec_cmd("vdirsyncer sync")
-    hl.exec_cmd("qs -c task-bar")
-    hl.exec_cmd("hyprpaper -c " .. home .. "/.config/hypr/hyprpaper.conf")
-    hl.exec_cmd("hypridle")
-    hl.exec_cmd("awww-daemon")
-    hl.exec_cmd("/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1")
-    hl.exec_cmd("awww img -o eDP-1 " .. home .. "/Pictures/Wallpaper/brian-mcgowan-I0fDR8xtApA-unsplash.jpg")
-    hl.exec_cmd("awww img -o DP-1 " .. home .. "/Pictures/Wallpaper/mimicry-hu-24tsXm7qGQE-unsplash.jpg")
+    hl.exec_cmd("wl-paste --type text --watch cliphist store")
+    hl.exec_cmd("wl-paste --type image --watch cliphist store")
+    shader.toggle("Main")
+    -- hyprpolkitagent is started separately via its own systemd --user service
+    -- vdirsyncer/mpv/wallpaper images removed: unconfigured/not installed/missing files
 end)
 
 -- =========================================================================
 -- Workspace Rules
 -- =========================================================================
 for i = 1, 5  do hl.workspace_rule({ workspace = tostring(i), monitor = "eDP-1" }) end
-for i = 6, 10 do hl.workspace_rule({ workspace = tostring(i), monitor = "DP-1" }) end
+for i = 6, 10 do hl.workspace_rule({ workspace = tostring(i), monitor = "HDMI-A-1" }) end
 
 -- =========================================================================
 -- Core Config
@@ -214,46 +216,47 @@ hl.gesture({ fingers = 3, direction = "vertical",   action = "fullscreen" })
 -- =========================================================================
 
 -- Hub & Modes
-hl.bind(mod .. " + SPACE", hl.dsp.global("quickshell:hubToggle")) -- QuickShell Hub
-hl.bind(mod .. " + R", hl.dsp.global("quickshell:drawerToggle"))  -- Workspace Drawer
+hl.bind(mod .. " + A", hl.dsp.global("quickshell:hubToggle")) -- QuickShell Hub
+hl.bind(mod .. " + SPACE", hl.dsp.exec_cmd("bash -c 'pkill -x rofi || ([ \"$(cat ~/.cache/quickshell/theme_mode 2>/dev/null)\" = light ] && ~/.config/rofi/launcher_2.sh || ~/.config/rofi/launcher.sh)'"))  -- Rofi app launcher (top-bar mode)
 
 -- Apps
-hl.bind(mod .. " + Q", hl.dsp.exec_cmd("kitty"))
-hl.bind(mod .. " + E", hl.dsp.exec_cmd("thunar"))
--- hl.bind(mod .. " + R", hl.dsp.exec_cmd(home .. "/.config/rofi/rofi_wide.sh")) -- if you prefer rofi
+hl.bind(mod .. " + Q", hl.dsp.window.close())
+hl.bind(mod .. " + Return", hl.dsp.exec_cmd("kitty"))
+hl.bind("CTRL + SHIFT + Escape", hl.dsp.exec_cmd("kitty -e btop"))
+hl.bind(mod .. " + Z", hl.dsp.global("quickshell:settingsToggle"))
+hl.bind(mod .. " + V", hl.dsp.exec_cmd(home .. "/.config/rofi/clipboard.sh"))
+hl.bind(mod .. " + E", hl.dsp.exec_cmd("dolphin"))
 hl.bind(mod .. " + B", hl.dsp.exec_cmd("firefox"))
+hl.bind(mod .. " + T", hl.dsp.exec_cmd("tauon"))
 hl.bind(mod .. " + S", hl.dsp.exec_cmd("lens --no-decorations --sniper"))
 hl.bind(mod .. " + P", hl.dsp.exec_cmd("hyprpicker -a"))
 
 -- Window Actions
 hl.bind(mod .. " + X", hl.dsp.window.close())
-hl.bind(mod .. " + F", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mod .. " + " .. alt .. " + F", function()
-    hl.dispatch(hl.dsp.window.float({ action = "set" }))
-    hl.dispatch(hl.dsp.window.resize({ x = 900, y = 600 }))
-    hl.dispatch(hl.dsp.window.center())
-end)
-hl.bind(mod .. " + M", function() hl.dispatch(hl.dsp.window.fullscreen()) end)
-hl.bind(mod .. " + P", hl.dsp.window.pseudo())
+hl.bind(mod .. " + F", function() hl.dispatch(hl.dsp.window.fullscreen()) end)
+hl.bind(mod .. " + " .. alt .. " + F", hl.dsp.window.pseudo())
 hl.bind(mod .. " + DOWN", hl.dsp.layout("togglesplit"))
 hl.bind(mod .. " + UP",   hl.dsp.layout("togglesplit"))
 hl.bind(mod .. " + G",    hl.dsp.group.toggle())
 
-hl.bind(mod .. " + L", function()
-    hl.dispatch(hl.dsp.window.float({ action = "set" }))
-    hl.dispatch(hl.dsp.window.resize_pixel({ exact = true, x = 1440, y = 1080 }))
-end)
+hl.bind(mod .. " + L", hl.dsp.exec_cmd("hyprlock"))
+hl.bind(alt .. " + Tab", function() hl.dispatch(hl.dsp.window.cycle_next()) end)
 
-hl.bind(mod .. " + CTRL + left",  function() hl.dispatch(hl.dsp.group.change_active({ direction = "next" })) end)
-hl.bind(mod .. " + CTRL + right", function() hl.dispatch(hl.dsp.group.change_active({ direction = "prev" })) end)
+hl.bind(mod .. " + CTRL + left",  hl.dsp.focus({ workspace = "-1" }))
+hl.bind(mod .. " + CTRL + right", hl.dsp.focus({ workspace = "+1" }))
 
 hl.bind(mod .. " + " .. alt .. " + F4", hl.dsp.exec_cmd("hyprctl dispatch 'hl.dsp.exit()'"))
-hl.bind(alt .. " + F4", hl.dsp.exec_cmd("hyprctl layers | grep -q power-menu || quickshell -p ~/.config/quickshell/task-bar/utils/PowerMenu.qml"))
+hl.bind(alt .. " + F4", hl.dsp.exec_cmd("hyprctl layers | grep -q power-menu || quickshell -p ~/.config/quickshell/top-bar/bar/PowerMenu.qml"))
 
-hl.bind(mod .. " + left",         hl.dsp.focus({ direction = "left" }))
-hl.bind(mod .. " + right",        hl.dsp.focus({ direction = "right" }))
-hl.bind(mod .. " + SHIFT + up",   hl.dsp.focus({ direction = "up" }))
-hl.bind(mod .. " + SHIFT + down", hl.dsp.focus({ direction = "down" }))
+hl.bind(mod .. " + left",  hl.dsp.focus({ direction = "left" }))
+hl.bind(mod .. " + right", hl.dsp.focus({ direction = "right" }))
+hl.bind(mod .. " + up",    hl.dsp.focus({ direction = "up" }))
+hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }))
+
+hl.bind(mod .. " + SHIFT + left",  hl.dsp.window.move({ direction = "l" }))
+hl.bind(mod .. " + SHIFT + right", hl.dsp.window.move({ direction = "r" }))
+hl.bind(mod .. " + SHIFT + up",    hl.dsp.window.move({ direction = "u" }))
+hl.bind(mod .. " + SHIFT + down",  hl.dsp.window.move({ direction = "d" }))
 
 hl.bind(mod .. " + H",         hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
@@ -295,24 +298,18 @@ hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true })
 -- switch:off = lid OPEN, switch:on = lid CLOSED
 hl.bind("switch:off:Lid Switch", function()
     hl.timer(function()
-        hl.monitor({
-            output   = "eDP-1",
-            mode     = "1920x1200@120",
-            position = "0x0",
-            scale    = 1,
-            disabled = false,
-        })
+        hl.exec_cmd("hyprctl dispatch dpms on")
     end, { timeout = 500, type = "oneshot" })
 end, { locked = true })
 
 hl.bind("switch:on:Lid Switch", function()
-    hl.monitor({ output = "eDP-1", disabled = true })
+    hl.exec_cmd("hyprctl dispatch dpms off")
 end, { locked = true })
 
 -- =========================================================================
 -- Window Rules
 -- =========================================================================
-hl.window_rule({ match = { class = "^kitty$" }, float = true, size = "950 550", center = true, rounding = 8, opacity = "0.9 0.9" })
+hl.window_rule({ match = { class = "^kitty$" }, rounding = 8, opacity = "0.9 0.9" })
 hl.window_rule({ match = { class = "^org.pwmt.zathura$" }, float = true, size = "750 1000" })
 hl.window_rule({ match = { class = "^blueman-manager$" }, float = true, size = "500 300", move = "1165 777", rounding = 10, opacity = "0.90 0.90", border_size = 1, border_color = "rgb(87b158) rgb(2D353B)", animation = "popin", dim_around = true })
 hl.window_rule({ match = { class = "^nm-connection-editor$" }, float = true, size = "500 600", center = true, rounding = 10, opacity = "0.95 0.95", border_color = "rgb(87b158)" })

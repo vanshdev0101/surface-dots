@@ -2,7 +2,7 @@
 # Reads the quickshell weather cache and prints Pango markup for the lockscreen:
 #   <icon>  <desc> <temp>
 # Exits with empty output if the cache is missing/unreadable so the label stays blank.
-f="/home/snes/.config/quickshell/.cache/weather.json"
+f="/home/vanshc/.config/quickshell/.cache/weather.json"
 [ -r "$f" ] || exit 0
 
 IFS=$'\t' read -r icon desc temp <<< "$(jq -r '.icon + "\t" + .desc + "\t" + .temp' "$f" 2>/dev/null)"

@@ -17,12 +17,12 @@ THEME_LIGHT="green-light"
 ICONS_DARK="Papirus-Dark"
 ICONS_LIGHT="Papirus-Light"
 # CURSORS
-CURSOR_DARK="Saturnian-Night"
-CURSOR_LIGHT="Saturnian-Day"
-CURSOR_SIZE="32"
+CURSOR_DARK="Adwaita"
+CURSOR_LIGHT="Adwaita"
+CURSOR_SIZE="24"
 # WALLPAPERS
-WALLPAPER_DARK="$HOME/Pictures/Wallpapers/ffx.png"
-WALLPAPER_LIGHT="$HOME/Pictures/Wallpapers/dissidia_ff.jpg"
+WALLPAPER_DARK="$HOME/Pictures/wallpapers/1q0QLHJ.png"
+WALLPAPER_LIGHT="$HOME/Pictures/wallpapers/1q0QLHJ.png"
 # PATHS
 GTK3_CONF="$HOME/.config/gtk-3.0"
 GTK3_SETTINGS="$GTK3_CONF/settings.ini"

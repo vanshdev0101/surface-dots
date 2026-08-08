@@ -46,14 +46,11 @@ Item {
 
         var bgSat  = Math.max(0.10, Math.min(0.30, avgSat * 0.45))
         var hubSat = Math.max(0.35, Math.min(0.65, avgSat))
-        var barHue = (dominantHue + 25) % 360 // analogous shift: related but not identical to the hub accent
 
         var bgColor  = Qt.hsla(dominantHue / 360, bgSat,  0.10, 1.0)
         var hubColor = Qt.hsla(dominantHue / 360, hubSat, 0.58, 1.0)
-        var barColor = Qt.hsla(barHue / 360,       hubSat, 0.55, 1.0)
 
         Lib.Configuration.customAccent    = hex6(hubColor)
-        Lib.Configuration.taskbarAccent   = hex6(barColor)
         Lib.Configuration.customBg        = hex6(bgColor)
         Lib.Configuration.useCustomColors = true
         Lib.Configuration.save()
@@ -90,7 +87,7 @@ Item {
     }
 
     // binary relative to this QML file (hub/../bin/papel)
-    readonly property string papelBin: Qt.resolvedUrl("../bin/papel").toString().replace("file://", "")
+    readonly property string papelBin: Quickshell.env("HOME") + "/.config/quickshell/task-bar/bin/papel"
 
     implicitHeight: contentCol.implicitHeight
 
@@ -129,7 +126,7 @@ Item {
     //  Layout 
     ColumnLayout {
         id: contentCol
-        anchors { left: parent.left; right: parent.right; top: parent.top }
+        anchors { fill: parent; margins: 14 }
         spacing: 8
 
         // Mini-header
@@ -181,7 +178,7 @@ Item {
         Item {
             id: gridWrapper
             Layout.fillWidth: true
-            Layout.preferredHeight: 296
+            Layout.fillHeight: true
 
             property int cols: 3
             property int gap:  6
@@ -290,7 +287,7 @@ Item {
                 RowLayout {
                     spacing: 6
                     Text {
-                        text: "~/Pictures/Wallpapers/"
+                        text: "~/Pictures/wallpapers/"
                         color: root.rAccent; font.family: "DM Mono"; font.pixelSize: 11
                     }
                 }

@@ -12,7 +12,7 @@
     notification_limit = 5
 
     # --- Look & Feel ---
-    font = Inter 11
+    font = Inter 10
     markup = full
     format = "<b>%s</b>\n%b"
     
@@ -29,13 +29,13 @@
     horizontal_padding = 16
     text_icon_padding = 16
     gap_size = 10
-    frame_width = 2
+    frame_width = 1
     corner_radius = 10
     
     # --- Icons ---
     icon_position = left
     max_icon_size = 48
-    icon_path = /usr/share/icons/Papirus-Light/48x48/status/:/usr/share/icons/Papirus-Light/48x48/devices/:/usr/share/icons/Papirus-Light/48x48/apps/
+    icon_path = /usr/share/icons/Papirus-Dark/48x48/status/:/usr/share/icons/Papirus-Dark/48x48/devices/:/usr/share/icons/Papirus-Dark/48x48/apps/
     
     # --- Interaction ---
     dmenu = /usr/bin/dmenu -p dunst:
@@ -52,27 +52,27 @@
     separator_color = frame
 
 [urgency_low]
-    background = "#F0ECE6"
-    foreground = "#141719"
-    frame_color = "#e4e1cd"
-    highlight = "#939f91"
+    background = "#141719"
+    foreground = "#fdf6e3"
+    frame_color = "#3b4c3a"
+    highlight = "#859289"
     timeout = 3
 
 [urgency_normal]
-    background = "#F0ECE6"
-    foreground = "#141719"
-    frame_color = "#DAD6D2D9"
-    highlight = "#4F6B5B"
+    background = "#141719"
+    foreground = "#e5dfc5"
+    frame_color = "#141719C8"
+    highlight = "#a7c080"
     timeout = 5
 
 [urgency_critical]
-    background = "#cc4947"
-    foreground = "#F0ECE6"
-    frame_color = "#bd5a58"
+    background = "#bd696b"
+    foreground = "#272e33"
+    frame_color = "#e67e80"
     highlight = "#ffffff"
     timeout = 0
 
-# --- RULES (OSD & Media) ---
+# --- RULES ---
 [media_fix]
     summary = "*media*"
     timeout = 2

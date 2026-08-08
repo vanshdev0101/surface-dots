@@ -55,7 +55,7 @@ Item {
     id: snapTimer
     interval: 320
     repeat: false
-    onTriggered: Quickshell.execDetached(["bash", "-c", "/home/snes/.config/hypr/screenshots/captureArea.sh"])
+    onTriggered: Quickshell.execDetached(["bash", "-c", "/home/vanshc/.config/hypr/screenshots/captureArea.sh"])
   }
 
   ColumnLayout {
@@ -171,8 +171,6 @@ Item {
             RowLayout {
                 Layout.alignment: Qt.AlignRight
                 spacing: 6
-                Lib.Chip { icon: ""; text: cpu.value ?? "0%" }
-                Lib.Chip { icon: ""; text: ram.value ?? "0%" }
             }
         }
       }
@@ -232,27 +230,4 @@ Item {
       }
   }
 
-  Lib.CommandPoll {
-      id: cpu
-      running: root.active && root.visible; interval: 4000
-      property var prevIdle: 0; property var prevTotal: 0
-      command: ["bash","-lc","grep 'cpu ' /proc/stat"]
-      parse: function(out) {
-          var parts = String(out).split(/\s+/)
-          var idle = Number(parts[4]) + Number(parts[5])
-          var total = 0
-          for (var i=1; i<parts.length; i++) total += Number(parts[i])
-          var diffTotal = total - prevTotal
-          var usage = (diffTotal > 0) ? (1 - ((idle - prevIdle) / diffTotal)) * 100 : 0
-          prevIdle = idle; prevTotal = total
-          return Math.round(usage) + "%"
-      }
-  }
-
-  Lib.CommandPoll {
-      id: ram
-      running: root.active && root.visible; interval: 5000
-      command: ["bash","-lc","awk '/MemTotal/ {t=$2} /MemAvailable/ {a=$2} END{ if(t>0) printf(\"%d%%\", (100-(a*100/t))); else print \"0%\" }' /proc/meminfo || true"]
-      parse: function(o) { return String(o).trim() || "0%" }
-  }
 }

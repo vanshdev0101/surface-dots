@@ -41,7 +41,7 @@ PanelWindow {
     // Dark/light: shared with the rest of the shell
     Process {
         id: themeCheck
-        command: ["cat", "/home/snes/.cache/quickshell/theme_mode"]
+        command: ["cat", "/home/vanshc/.cache/quickshell/theme_mode"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {

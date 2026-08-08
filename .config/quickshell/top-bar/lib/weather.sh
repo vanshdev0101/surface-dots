@@ -3,8 +3,11 @@
 
 # OpenWeatherMap API Configuration
 API_KEY="YOUR WEATHER API"
-LAT="LATITUDE"   
+LAT="LATITUDE"
 LON="LONGITUDE"
+
+# Overrides written by the Settings panel, if present
+[ -f "$HOME/.local/state/theme/weather_override.conf" ] && source "$HOME/.local/state/theme/weather_override.conf"
 
 # Cache Configuration
 CACHE_FILE="$HOME/.config/quickshell/.cache/weather.json"

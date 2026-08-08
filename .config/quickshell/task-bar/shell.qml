@@ -89,6 +89,22 @@ ShellRoot {
                 onPressed: toggleHub()
             }
 
+            // Jump straight to the Settings panel inside the hub (bind SUPER+Z in Hyprland)
+            function toggleSettings() {
+                if (hubWindow.visible && hubWindow.settingsPanelOpen) {
+                    hubWindow.closeAll()
+                } else {
+                    hubWindow.visible = true
+                    hubWindow.settingsPanelOpen = true
+                }
+            }
+
+            GlobalShortcut {
+                name: "settingsToggle"
+                description: "Toggle settings panel"
+                onPressed: toggleSettings()
+            }
+
             // Toggle the wide app drawer (bind SUPER+R in Hyprland)
             GlobalShortcut {
                 name: "drawerToggle"

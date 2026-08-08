@@ -21,7 +21,7 @@ Lib.Card {
     id: weather
     running: root.active && root.visible
     interval: 60000
-    command: ["bash","-lc", "$HOME/.config/quickshell/snes-hub/lib/weather.sh"]
+    command: ["bash","-lc", "$HOME/.config/quickshell/top-bar/lib/weather.sh"]
     parse: function(out) {
       try {
         var d = JSON.parse(String(out))

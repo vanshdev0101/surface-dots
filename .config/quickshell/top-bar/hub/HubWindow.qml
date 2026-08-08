@@ -18,12 +18,16 @@ PanelWindow {
 
     function closeAll() {
     if (header) header.expanded = false
+    win.settingsPanelOpen = false
+    win.wallpaperMode = false
     win.visible = false
 }
     onVisibleChanged: {
     setBordersHidden(visible)
     if (!visible) {
         win.batteryCardActive = false
+        win.settingsPanelOpen = false
+        win.wallpaperMode = false
         if (header) header.expanded = false
     } else {
         root.forceActiveFocus()
@@ -68,8 +72,10 @@ PanelWindow {
     WlrLayershell.namespace: "snes-hub"
 
     property string profileName: Config.PROFILE_NAME
-    property string profileImage: Config.PROFILE_IMG
+    property string profileImage: Lib.Configuration.profileImageOverride !== "" ? Lib.Configuration.profileImageOverride : Config.PROFILE_IMG
     property bool batteryCardActive: false
+    property bool settingsPanelOpen: false
+    property bool wallpaperMode: false
     property int topGap: 8
     property int rightGap: 10
     property int panelW: 320
@@ -119,12 +125,15 @@ PanelWindow {
 
         Rectangle {
             id: panel
-            width: win.panelW
-            height: Math.ceil(layout.implicitHeight + 24)
+            width: win.wallpaperMode ? Math.min(980, win.width - 2 * win.rightGap) : win.panelW
+            height: win.wallpaperMode ? Math.min(860, win.height - 2 * win.topGap) : Math.ceil(layout.implicitHeight + 24)
+            Behavior on width { NumberAnimation { id: panelWidthAnim; duration: 380; easing.type: Easing.OutExpo } }
+            Behavior on height { NumberAnimation { id: panelHeightAnim; duration: 380; easing.type: Easing.OutExpo } }
             radius: theme.radiusOuter
             color: theme.bgMain
             border.width: 1
             border.color: theme.border
+            clip: true
 
             anchors {
                 right: parent.right
@@ -163,43 +172,70 @@ PanelWindow {
                     }
                 }
 
-                ButtonsSlidersCard {
-                    id: buttons
+                ColumnLayout {
+                    id: cardsColumn
                     Layout.fillWidth: true
-                    active: win.visible
-                    theme: theme
-                    onCloseRequested: closeAll()
-                    onBatteryToggleRequested: win.batteryCardActive = !win.batteryCardActive
+                    spacing: theme.gapCard
+                    opacity: (!win.settingsPanelOpen && !win.wallpaperMode) ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                    visible: opacity > 0.01
+
+                    ButtonsSlidersCard {
+                        id: buttons
+                        Layout.fillWidth: true
+                        active: win.visible
+                        theme: theme
+                        onCloseRequested: closeAll()
+                        onBatteryToggleRequested: win.batteryCardActive = !win.batteryCardActive
+                    }
+
+                    BatteryHealthCard {
+                        id: battery
+                        Layout.fillWidth: true
+                        active: win.batteryCardActive
+                        theme: theme
+                    }
+
+                    MediaCard {
+                        id: media
+                        Layout.fillWidth: true
+                        onCloseRequested: closeAll()
+                    }
+
+                    CalendarWeatherCard {
+                        Layout.fillWidth: true
+                        active: win.visible
+                        theme: theme
+                        onCloseRequested: closeAll()
+                    }
+
+                    NotificationsCard {
+                        id: notifs
+                        Layout.fillWidth: true
+                        active: win.visible
+                        compactMode: media.visible || battery.visible || header.expanded
+                        dndActive: buttons.dnd
+                        theme: theme
+                    }
                 }
 
-                BatteryHealthCard {
-                    id: battery
+                SettingsCard {
+                    id: settingsCard
                     Layout.fillWidth: true
-                    active: win.batteryCardActive
-                    theme: theme
+                    active: win.settingsPanelOpen && !win.wallpaperMode
+                    parentTheme: theme
+                    onWallpaperRequested: win.wallpaperMode = true
+                    onBackRequested: win.settingsPanelOpen = false
                 }
+            }
 
-                MediaCard {
-                    id: media
-                    Layout.fillWidth: true
-                    onCloseRequested: closeAll()
-                }
-
-                CalendarWeatherCard {
-                    Layout.fillWidth: true
-                    active: win.visible
-                    theme: theme
-                    onCloseRequested: closeAll()
-                }
-
-                NotificationsCard {
-                    id: notifs
-                    Layout.fillWidth: true
-                    active: win.visible
-                    compactMode: media.visible || battery.visible || header.expanded
-                    dndActive: buttons.dnd
-                    theme: theme
-                }
+            WallpaperPanel {
+                id: wallpaperPanel
+                anchors.fill: panel
+                theme: theme
+                visible: win.wallpaperMode
+                live: !(panelWidthAnim.running || panelHeightAnim.running)
+                onCloseRequested: win.wallpaperMode = false
             }
         }
     }

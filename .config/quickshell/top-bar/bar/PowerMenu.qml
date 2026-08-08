@@ -5,6 +5,7 @@ import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import "../lib" as Lib
 
 // This is a separate power menu for ALT+F4
 
@@ -24,12 +25,13 @@ PanelWindow {
 
     // Theme + Images
     property bool isDarkMode: true
-    property url imgDark: Qt.resolvedUrl("dark.png")
-    property url imgLight: Qt.resolvedUrl("light.png")
+    readonly property bool hasCustomBg: Lib.Configuration.powerMenuBgImage !== ""
+    property url imgDark: hasCustomBg ? ("file://" + Lib.Configuration.powerMenuBgImage) : Qt.resolvedUrl("dark.png")
+    property url imgLight: hasCustomBg ? ("file://" + Lib.Configuration.powerMenuBgImage) : Qt.resolvedUrl("light.png")
 
     Process {
         id: themeCheck
-        command: ["cat", "/home/snes/.cache/quickshell/theme_mode"]
+        command: ["cat", "/home/vanshc/.cache/quickshell/theme_mode"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {

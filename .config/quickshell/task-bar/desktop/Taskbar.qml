@@ -941,6 +941,9 @@ PanelWindow {
 
                         Process {
                             id: updateProc
+                            // Must NOT auto-start on creation (Process defaults to running:true) --
+                            // this only fires from the explicit onClicked below.
+                            running: false
                             command: ["kitty", "-e", "bash", "-lc", "sudo pacman -Syu"]
                             onRunningChanged: { if (!running) updates.update() }
                         }

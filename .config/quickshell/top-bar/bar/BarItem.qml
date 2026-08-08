@@ -110,9 +110,7 @@ Item {
     }
     
     scale: (hover.hovered ? 1.06 : 1.0) * (press.pressed ? 0.94 : 1.0)
-    y: press.pressed ? 2 : (hover.hovered ? -1 : 0)
     Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutBack; easing.overshoot: 1.18 } }
-    Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
     RowLayout {
         id: layout

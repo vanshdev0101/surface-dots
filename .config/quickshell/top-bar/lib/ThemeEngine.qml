@@ -17,7 +17,7 @@ QtObject {
     // 1) Surfaces 
     readonly property color bgPanel:     isDarkMode ? Qt.rgba(20/255, 23/255, 25/255, 0.88)
                                                     : Qt.rgba(237/255, 197/255, 198/255, 0.69)
-    readonly property color bgMain:      isDarkMode ? "#141719"  : "#a6b0a0"
+    readonly property color bgMain:      Configuration.useCustomColors ? Configuration.customBg : (isDarkMode ? "#141719"  : "#a6b0a0")
     readonly property color bgCard:      isDarkMode ? "#1e2326"  : "#edc5c6b0"
     readonly property color bgItem:      isDarkMode ? "#2d353b"  : Qt.rgba(0, 0, 0, 0.05)
     readonly property color bgItemHover: isDarkMode ? "#374145"  : Qt.rgba(0, 0, 0, 0.08)
@@ -31,7 +31,7 @@ QtObject {
     readonly property color textOSD:       isDarkMode ? '#a7b3aa' : '#5f7b5f'
 
     // 3) Accents 
-    readonly property color accent:        isDarkMode ? "#a7c080" : "#3c4841"
+    readonly property color accent:        Configuration.useCustomColors ? Configuration.customAccent : (isDarkMode ? "#a7c080" : "#3c4841")
     readonly property color accentSlider:  isDarkMode ? "#83C092" : "#273018"
     readonly property color accentBlue:    "#7AA1A6"
     readonly property color accentRed:     isDarkMode ? "#e67e80" : "#7a2a2a"

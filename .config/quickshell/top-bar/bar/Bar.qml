@@ -16,7 +16,7 @@ PanelWindow {
     signal requestHubToggle()
 
     anchors { top: true; left: true; right: true }
-    height: 40
+    height: 46
     color: "transparent"
 
     // 1. GLOBAL STATE 
@@ -41,7 +41,7 @@ PanelWindow {
     }
 //--------------------------------------------------------------------------------
     WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.exclusiveZone: 38
+    WlrLayershell.exclusiveZone: 46
     WlrLayershell.namespace: "shell-bar"
 //--------------------------------------------------------------------------------
     function sh(cmd) { return ["bash", "-c", cmd] }
@@ -56,8 +56,8 @@ PanelWindow {
         property color bg: win.isDarkMode ? Qt.rgba(0.23, 0.25, 0.22, 0.25) : '#edc5c6b0'
         property color textPrimary: win.isDarkMode ? "#d5c9b2" : "#1e2326"
         property color textSecondary: win.isDarkMode ? "#6a6f75" : "#5c6a72"
-        property color accent: win.isDarkMode ? "#a7c080" : "#273018"
-        property color activePill: win.isDarkMode ? "#a7c080" : "#87C080"
+        property color accent: Lib.Configuration.useCustomColors ? Lib.Configuration.customAccent : (win.isDarkMode ? "#a7c080" : "#273018")
+        property color activePill: Lib.Configuration.useCustomColors ? Lib.Configuration.customAccent : (win.isDarkMode ? "#a7c080" : "#87C080")
         property color hoverSpotlight: win.isDarkMode ? Qt.rgba(1,1,1,0.14) : Qt.rgba(0,0,0,0.10)
         property color border: win.isDarkMode ? Qt.rgba(1,1,1,0.08) : Qt.rgba(0,0,0,0.1)
 
@@ -135,34 +135,6 @@ PanelWindow {
     }
 
     // POLLERS
-    // 6.1 UPDATE POLLER
-    Lib.CommandPoll {
-        id: updates
-        // Stop polling while the update terminal is open
-        interval: updateProc.running ? 999999999 : 1800000
-
-        command: win.sh(`
-            # Don't run checkupdates while pacman is locked
-            if [ -e /var/lib/pacman/db.lck ]; then
-                cat /tmp/qs_updates_count 2>/dev/null || echo 0
-                exit 0
-            fi
-
-            n=$(checkupdates 2>/dev/null | wc -l)
-            echo "$n" | tee /tmp/qs_updates_count
-        `)
-
-        parse: function(o) { return String(o ?? "").trim() }
-    }
-
-    // Boot Retry for Updates
-    Timer {
-        interval: 15000 // 15s wait for internet
-        running: true; repeat: false
-        onTriggered: {
-            if (!updateProc.running) updates.update()
-        }
-    }
     // 6.2 BATTERY %, STATUS POLLER
     Lib.CommandPoll {
         id: powerPoll
@@ -286,14 +258,14 @@ PanelWindow {
 // ------------------ THE BAR ---------------------------------------------------------------------------------
     Rectangle {
         anchors.fill: parent
-        anchors.margins: 4
-        anchors.leftMargin: 12
-        anchors.rightMargin: 12
-        color: "transparent"
+        radius: 0
+        color: win.isDarkMode ? Qt.rgba(20/255, 23/255, 25/255, 0.92) : palette.bg
 
         RowLayout {
             anchors.fill: parent
-            spacing: 10
+            anchors.leftMargin: 14
+            anchors.rightMargin: 14
+            spacing: 14
 // LEFT----------------------------------------------------------------------------------------------------------
 
             // 7. LAUNCHER
@@ -355,7 +327,7 @@ PanelWindow {
                         if (mouse.button === Qt.LeftButton) win.det("pkill -x rofi || " + (win.isDarkMode ? "~/.config/rofi/launcher.sh" : "~/.config/rofi/launcher_2.sh"))
                         else if (mouse.button === Qt.RightButton) {
                             win.isDarkMode = !win.isDarkMode
-                            win.det("bash /home/snes/.config/quickshell/top-bar/bar/theme-mode.sh " + (win.isDarkMode ? "dark" : "light"))
+                            win.det("bash /home/vanshc/.config/quickshell/top-bar/bar/theme-mode.sh " + (win.isDarkMode ? "dark" : "light"))
                         }
                     }
                 }
@@ -576,36 +548,6 @@ PanelWindow {
             }
 
 //----------------------------------------------------------------------------------------RIGHT----------
-
-            // 10. UPDATES
-            BarItem {
-                property color updatesBg: win.isDarkMode ? '#ce829469' : '#be7f9b58'
-                property color updatesFg: win.isDarkMode ? "#2d353b" : "#1e2326"
-
-                // Keep visible while update process is running
-                visible: updateProc.running || (updates.value !== "0" && updates.value !== "")
-                iconSource: "../lib/pacman.svg"
-                text: updateProc.running ? "…" : updates.value
-                bgColor: updatesBg; textColor: updatesFg; iconColor: updatesFg
-                borderWidth: 0; borderColor: "transparent"; hoverColor: palette.hoverSpotlight
-
-                Process {
-                    id: updateProc
-                    // The process stays 'running' as long as the window is open.
-                    command: ["kitty", "-e", "bash", "-lc", "sudo pacman -Syu"]
-
-                    // When running changes to false (window closed),
-                    onRunningChanged: {
-                        if (!running) {
-                            updates.update()
-                        }
-                    }
-                }
-
-                onClicked: {
-                    updateProc.running = true
-                }
-            }
 
             // 11. TRAY
             Rectangle {

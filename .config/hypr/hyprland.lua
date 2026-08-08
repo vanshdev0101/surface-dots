@@ -169,12 +169,17 @@ hl.config({
         enable_swallow           = true,
         swallow_regex            = "^(kitty)$"
     },
-layerrule = {
-    "animation slide, rofi",
-    "animation popin, power-menu",
-    "dim_around, power-menu",
-}
 })
+
+-- =========================================================================
+-- Layer Rules
+-- =========================================================================
+hl.layer_rule({ name = "rofi-anim",       match = { namespace = "^rofi$" },            animation = "slide" })
+hl.layer_rule({ name = "volume-osd-anim", match = { namespace = "^volume-osd$" },      animation = "slide" })
+hl.layer_rule({ name = "bright-osd-anim", match = { namespace = "^brightness-osd$" },  animation = "slide" })
+hl.layer_rule({ name = "theme-osd-anim",  match = { namespace = "^theme-osd$" },       animation = "slide" })
+hl.layer_rule({ name = "power-menu-anim", match = { namespace = "^power-menu$" },      animation = "popin", dim_around = true })
+hl.layer_rule({ name = "hub-anim",        match = { namespace = "^snes-hub$" },        animation = "slide top" })
 
 -- =========================================================================
 -- Animations
@@ -185,22 +190,24 @@ hl.curve("md3_accel", { type = "bezier", points = { {0.3, 0.0}, {0.8, 0.15} } })
 
 hl.curve("winIn", { type = "spring", mass = 1, stiffness = 350, dampening = 35 })
 hl.curve("winOut", { type = "spring", mass = 1, stiffness = 320, dampening = 32 })
-hl.curve("winMove", { type = "spring", mass = 1, stiffness = 300, dampening = 30 })
+hl.curve("winMove", { type = "spring", mass = 1, stiffness = 170, dampening = 22 })
 
 hl.animation({ leaf = "windowsIn", enabled = true, speed = 3, spring = "winIn", style = "popin 85%" })
 hl.animation({ leaf = "windowsOut", enabled = true, speed = 3, spring = "winOut", style = "popin 85%" })
-hl.animation({ leaf = "windowsMove", enabled = true, speed = 3, spring = "winMove", style = "slide" })
+hl.animation({ leaf = "windowsMove", enabled = true, speed = 2.2, spring = "winMove", style = "slide" })
 
 hl.animation({ leaf = "fade", enabled = true, speed = 2, bezier = "md3_standard" })
 hl.animation({ leaf = "fadeDim", enabled = true, speed = 2, bezier = "md3_standard" })
 
-hl.animation({ leaf = "workspacesIn", enabled = true, speed = 3, bezier = "md3_decel", style = "slidefade 15%" })
-hl.animation({ leaf = "workspacesOut", enabled = true, speed = 3, bezier = "md3_accel", style = "slidefade 15%" })
+hl.animation({ leaf = "workspacesIn", enabled = true, speed = 2.4, bezier = "md3_decel", style = "slidefade 15%" })
+hl.animation({ leaf = "workspacesOut", enabled = true, speed = 2.4, bezier = "md3_accel", style = "slidefade 15%" })
 hl.animation({ leaf = "specialWorkspaceIn", enabled = true, speed = 3, bezier = "md3_decel", style = "slide top" })
 hl.animation({ leaf = "specialWorkspaceOut", enabled = true, speed = 3, bezier = "md3_accel", style = "slide top" })
 
 hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 2, bezier = "md3_decel" })
 hl.animation({ leaf = "fadeLayersOut", enabled = true, speed = 2, bezier = "md3_accel" })
+hl.animation({ leaf = "layersIn", enabled = true, speed = 2.2, bezier = "md3_decel" })
+hl.animation({ leaf = "layersOut", enabled = true, speed = 2.2, bezier = "md3_accel" })
 
 
 
@@ -217,7 +224,9 @@ hl.gesture({ fingers = 3, direction = "vertical",   action = "fullscreen" })
 
 -- Hub & Modes
 hl.bind(mod .. " + A", hl.dsp.global("quickshell:hubToggle")) -- QuickShell Hub
+hl.bind(mod .. " + SHIFT + A", hl.dsp.exec_cmd("bash " .. home .. "/.config/rofi/audio-output.sh")) -- Switch audio output
 hl.bind(mod .. " + SPACE", hl.dsp.exec_cmd("bash -c 'pkill -x rofi || ([ \"$(cat ~/.cache/quickshell/theme_mode 2>/dev/null)\" = light ] && ~/.config/rofi/launcher_2.sh || ~/.config/rofi/launcher.sh)'"))  -- Rofi app launcher (top-bar mode)
+hl.bind(mod .. " + C", hl.dsp.exec_cmd("bash -c 'pkill -x rofi || { [ \"$(cat ~/.cache/quickshell/theme_mode 2>/dev/null)\" = light ] && s=shaders_menu_light.sh t=style-light || s=shaders_menu.sh t=style-dark; rofi -show shaders -modi \"shaders:$HOME/.config/rofi/$s\" -theme \"$HOME/.config/rofi/$t.rasi\"; }'"))  -- Shader picker (all 16)
 
 -- Apps
 hl.bind(mod .. " + Q", hl.dsp.window.close())
@@ -228,7 +237,6 @@ hl.bind(mod .. " + V", hl.dsp.exec_cmd(home .. "/.config/rofi/clipboard.sh"))
 hl.bind(mod .. " + E", hl.dsp.exec_cmd("dolphin"))
 hl.bind(mod .. " + B", hl.dsp.exec_cmd("firefox"))
 hl.bind(mod .. " + T", hl.dsp.exec_cmd("tauon"))
-hl.bind(mod .. " + S", hl.dsp.exec_cmd("lens --no-decorations --sniper"))
 hl.bind(mod .. " + P", hl.dsp.exec_cmd("hyprpicker -a"))
 
 -- Window Actions
@@ -260,6 +268,9 @@ hl.bind(mod .. " + SHIFT + down",  hl.dsp.window.move({ direction = "d" }))
 
 hl.bind(mod .. " + H",         hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
+-- Pull the focused window back out of the scratchpad. activeWorkspace stays on the
+-- real workspace even while special:magic is open, so this is the right target.
+hl.bind(mod .. " + S", hl.dsp.exec_cmd("bash -c 'ws=$(hyprctl monitors -j | jq -r \".[] | select(.focused) | .activeWorkspace.id\"); hyprctl dispatch \"hl.dsp.window.move({ workspace = $ws })\"'"))
 
 hl.bind(mod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 hl.bind(mod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
@@ -316,7 +327,6 @@ hl.window_rule({ match = { class = "^nm-connection-editor$" }, float = true, siz
 hl.window_rule({ match = { class = "^com.snes.evercal$" }, float = true, size = "1000 650", center = true, border_size = 1, rounding = 8 })
 hl.window_rule({ match = { class = "^org.gnome.Lollypop$" }, float = true, size = "900 600" })
 hl.window_rule({ match = { class = "^org.kde.plasma-systemmonitor$" }, float = true, size = "1000 700", rounding = 14 })
-hl.window_rule({ match = { class = "^lens$" }, float = true, center = true, size = "1000 700", rounding = 10, border_color = "rgb(374527)" })
 --hl.window_rule({ match = { class = "^thunar$" }, float = true, size = "900 600", center = true })
 hl.window_rule({ match = { class = "^xdm-app$" }, float = true, size = "700 400", rounding = 10, opacity = "0.8 0.8", center = true })
 hl.window_rule({ match = { class = "^org.gnome.FileRoller$" }, float = true, size = "500 350", center = true, rounding = 10, border_color = "rgb(87b158)" })

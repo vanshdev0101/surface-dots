@@ -9,6 +9,7 @@ declare -a SHADERS=(
     "Main|$HOME/.config/hypr/shaders/main.glsl|$HOME/.config/rofi/icons/light/main.svg"
     "Outdoor|$HOME/.config/hypr/shaders/outdoor.glsl|$HOME/.config/rofi/icons/light/outdoor.svg"
     "Cinema|$HOME/.config/hypr/shaders/cinema.glsl|$HOME/.config/rofi/icons/light/cinema.svg"
+    "Soft|$HOME/.config/hypr/shaders/soft.glsl|$HOME/.config/rofi/icons/light/soft.svg"
     "Amano|$HOME/.config/hypr/shaders/amano.glsl|$HOME/.config/rofi/icons/light/soft.svg"
     "Art Canvas|$HOME/.config/hypr/shaders/art_canvas.glsl|$HOME/.config/rofi/icons/light/canvas.svg"
     "Dither|$HOME/.config/hypr/shaders/dither.glsl|$HOME/.config/rofi/icons/light/dither.svg"

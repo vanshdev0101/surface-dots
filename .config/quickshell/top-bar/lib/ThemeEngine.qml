@@ -32,13 +32,20 @@ QtObject {
 
     // 3) Accents 
     readonly property color accent:        Configuration.useCustomColors ? Configuration.customAccent : (isDarkMode ? "#a7c080" : "#3c4841")
-    readonly property color accentSlider:  isDarkMode ? "#83C092" : "#273018"
+    readonly property color accentSlider:  Configuration.useCustomColors ? accent : (isDarkMode ? "#83C092" : "#273018")
     readonly property color accentBlue:    "#7AA1A6"
     readonly property color accentRed:     isDarkMode ? "#e67e80" : "#7a2a2a"
-    readonly property color accentSlider2: isDarkMode ? "#f1af97" : "#d39984"
+    // Second OSD gradient stop: hue-shifted off the accent so the gradient stays two-tone.
+    readonly property color accentSlider2: Configuration.useCustomColors
+        ? Qt.hsla((accent.hslHue + 0.08) % 1.0,
+                  accent.hslSaturation,
+                  Math.min(0.78, accent.hslLightness + 0.10), 1.0)
+        : (isDarkMode ? "#f1af97" : "#d39984")
 
-    // 4) Lines, hovers, misc 
-    readonly property color border:          isDarkMode ? "#70a7c080" : "#b9566a35"
+    // 4) Lines, hovers, misc
+    readonly property color border:          Configuration.useCustomColors
+                                                ? Qt.rgba(accent.r, accent.g, accent.b, 0.44)
+                                                : (isDarkMode ? "#70a7c080" : "#b9566a35")
     readonly property color outline:         isDarkMode ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(0, 0, 0, 0.10)
     readonly property color subtleFill:      isDarkMode ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(0, 0, 0, 0.05)
     readonly property color subtleFillHover: isDarkMode ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(0, 0, 0, 0.10)

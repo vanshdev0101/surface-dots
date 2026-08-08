@@ -15,12 +15,40 @@ Scope {
     // Empty = use the bundled default artwork
     property string powerMenuBgImage: ""
 
+    // Power menu skin: "life" (default) or "cassini". Accents are per-skin,
+    // per-theme-mode -- empty string means "use the skin's built-in default".
+    property string powerMenuStyle:          "life"
+    property string powerMenuLifeAccentDark:  ""
+    property string powerMenuLifeAccentLight: ""
+    property string powerMenuCassiniAccentDark:  ""
+    property string powerMenuCassiniAccentLight: ""
+
+    function resetPowerMenuAccents() {
+        powerMenuLifeAccentDark     = ""
+        powerMenuLifeAccentLight    = ""
+        powerMenuCassiniAccentDark  = ""
+        powerMenuCassiniAccentLight = ""
+        save()
+    }
+
     property string weatherApiKey: ""
     property string weatherLat:    ""
     property string weatherLon:    ""
 
     // Empty = fall back to config.js's hardcoded default
     property string profileImageOverride: ""
+
+    // Bar layer: also drives the bar's own visible height
+    property int barExclusiveZone: 46
+
+    // Screen borders. Same story as task-bar: thickness/color are previewed
+    // here but actually applying them means editing gaps_out by hand, so the
+    // toggles/slider surface a toast telling the user that.
+    property int    borderThickness:     7
+    property color  borderFrameColor:    "#141719"
+    property bool   bordersEnabled:      true
+    property bool   bordersForceVisible: false
+    property bool   borderUseCustomColor: false
 
     function save() { writeTimer.restart() }
 
@@ -36,10 +64,21 @@ Scope {
             customAccent:         String(root.customAccent),
             customBg:             String(root.customBg),
             powerMenuBgImage:     root.powerMenuBgImage,
+            powerMenuStyle:              root.powerMenuStyle,
+            powerMenuLifeAccentDark:     root.powerMenuLifeAccentDark,
+            powerMenuLifeAccentLight:    root.powerMenuLifeAccentLight,
+            powerMenuCassiniAccentDark:  root.powerMenuCassiniAccentDark,
+            powerMenuCassiniAccentLight: root.powerMenuCassiniAccentLight,
             weatherApiKey:        root.weatherApiKey,
             weatherLat:           root.weatherLat,
             weatherLon:           root.weatherLon,
-            profileImageOverride: root.profileImageOverride
+            profileImageOverride: root.profileImageOverride,
+            barExclusiveZone:     root.barExclusiveZone,
+            borderThickness:      root.borderThickness,
+            borderFrameColor:     String(root.borderFrameColor),
+            bordersEnabled:       root.bordersEnabled,
+            bordersForceVisible:  root.bordersForceVisible,
+            borderUseCustomColor: root.borderUseCustomColor
         }))
         _writeKittyAccent()
         _writeWeatherOverride()
@@ -78,10 +117,21 @@ Scope {
             if (d.customAccent     !== undefined) root.customAccent     = d.customAccent
             if (d.customBg         !== undefined) root.customBg         = d.customBg
             if (d.powerMenuBgImage     !== undefined) root.powerMenuBgImage     = d.powerMenuBgImage
+            if (d.powerMenuStyle              !== undefined) root.powerMenuStyle              = d.powerMenuStyle
+            if (d.powerMenuLifeAccentDark     !== undefined) root.powerMenuLifeAccentDark     = d.powerMenuLifeAccentDark
+            if (d.powerMenuLifeAccentLight    !== undefined) root.powerMenuLifeAccentLight    = d.powerMenuLifeAccentLight
+            if (d.powerMenuCassiniAccentDark  !== undefined) root.powerMenuCassiniAccentDark  = d.powerMenuCassiniAccentDark
+            if (d.powerMenuCassiniAccentLight !== undefined) root.powerMenuCassiniAccentLight = d.powerMenuCassiniAccentLight
             if (d.weatherApiKey        !== undefined) root.weatherApiKey        = d.weatherApiKey
             if (d.weatherLat           !== undefined) root.weatherLat           = d.weatherLat
             if (d.weatherLon           !== undefined) root.weatherLon           = d.weatherLon
             if (d.profileImageOverride !== undefined) root.profileImageOverride = d.profileImageOverride
+            if (d.barExclusiveZone     !== undefined) root.barExclusiveZone     = d.barExclusiveZone
+            if (d.borderThickness      !== undefined) root.borderThickness      = d.borderThickness
+            if (d.borderFrameColor     !== undefined) root.borderFrameColor     = d.borderFrameColor
+            if (d.bordersEnabled       !== undefined) root.bordersEnabled       = d.bordersEnabled
+            if (d.bordersForceVisible  !== undefined) root.bordersForceVisible  = d.bordersForceVisible
+            if (d.borderUseCustomColor !== undefined) root.borderUseCustomColor = d.borderUseCustomColor
         } catch(e) {
             console.warn("[Configuration] load failed:", e)
         }

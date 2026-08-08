@@ -161,7 +161,8 @@ Item {
         id: press
         anchors.fill: parent
         hoverEnabled: true
-        onClicked: (mouse) => { if (root.toggleable) root.checked = !root.checked; root.clicked(mouse) }
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: (mouse) => { if (root.toggleable && mouse.button === Qt.LeftButton) root.checked = !root.checked; root.clicked(mouse) }
         onEntered: if (root.shimmerEnabled) shimmerAnim.restart()
     }
     HoverHandler { id: hover }

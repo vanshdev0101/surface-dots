@@ -78,7 +78,7 @@ PanelWindow {
     property bool wallpaperMode: false
     property int topGap: 8
     property int rightGap: 10
-    property int panelW: 320
+    property int panelW: win.settingsPanelOpen ? 480 : 320
 
     function executeAction(action) {
         var cmd = ""
@@ -226,6 +226,7 @@ PanelWindow {
                     parentTheme: theme
                     onWallpaperRequested: win.wallpaperMode = true
                     onBackRequested: win.settingsPanelOpen = false
+                    onToastRequested: (msg) => panel.triggerToast(msg)
                 }
             }
 
@@ -236,6 +237,33 @@ PanelWindow {
                 visible: win.wallpaperMode
                 live: !(panelWidthAnim.running || panelHeightAnim.running)
                 onCloseRequested: win.wallpaperMode = false
+            }
+
+            // Panel-level toast (used by Settings for previews that don't
+            // actually apply, e.g. screen-border sliders)
+            property bool   _showToast: false
+            property string _toastText: ""
+            function triggerToast(msg) { _toastText = msg; _showToast = true; panelToastTimer.restart() }
+            Timer { id: panelToastTimer; interval: 3500; onTriggered: panel._showToast = false }
+
+            Rectangle {
+                z: 99
+                anchors.top: parent.top
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.topMargin: 10
+                height: 26; radius: 7
+                width: panelToastLabel.implicitWidth + 22
+                color: Qt.rgba(theme.bgCard.r, theme.bgCard.g, theme.bgCard.b, 0.94)
+                border.width: 1; border.color: theme.accent
+                opacity: panel._showToast ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 180 } }
+                Text {
+                    id: panelToastLabel
+                    anchors.centerIn: parent
+                    text: panel._toastText
+                    color: theme.accent
+                    font.pixelSize: 11
+                }
             }
         }
     }

@@ -56,10 +56,10 @@ window {
     location:                    southwest;
     anchor:                      southwest;
     fullscreen:                  false;
-    
-    width:                       260px;
-    x-offset:                    5px;
-    y-offset:                    -5px;
+
+    width:                       420px;
+    x-offset:                    12px;
+    y-offset:                    -12px;
 
     enabled:                     true;
     border-radius:               10px;

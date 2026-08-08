@@ -201,7 +201,7 @@ Lib.Card {
         onClicked: toggleWifi()
         onRightClicked: {
             root.closeRequested()
-            det("quickshell -p ~/.config/quickshell/snes-hub/lib/WifiMenu.qml")
+            det("quickshell -p ~/.config/quickshell/top-bar/lib/WifiMenu.qml")
         }
       }
 
@@ -253,9 +253,6 @@ Lib.Card {
         from: 0; to: 100
         value: 50
         Layout.fillWidth: true
-        accentColor: (root.theme && root.theme.isDarkMode !== undefined && !root.theme.isDarkMode)
-            ? root.theme.accentSlider
-            : "#83C092"
         onUserChanged: det("brightnessctl set " + Math.round(value) + "%")
       }
 
@@ -271,9 +268,6 @@ Lib.Card {
         from: 0; to: 100
         value: 0
         Layout.fillWidth: true
-        accentColor: (root.theme && root.theme.isDarkMode !== undefined && !root.theme.isDarkMode)
-            ? root.theme.accentSlider
-            : "#83C092"
         onUserChanged: det("pactl set-sink-volume @DEFAULT_SINK@ " + Math.round(value) + "%")
       }
     }

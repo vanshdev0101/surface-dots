@@ -11,8 +11,19 @@ PanelWindow {
     anchors { top: true; bottom: true; left: true; right: true }
     color: "transparent"
 
+    // Open on the screen whose bar was clicked (WIFIMENU_SCREEN), else fall back
+    // to shell.qml's rule: first non-eDP-1 screen.
+    screen: {
+        const want = Quickshell.env("WIFIMENU_SCREEN") || ""
+        for (var i = 0; i < Quickshell.screens.length; i++)
+            if (Quickshell.screens[i].name === want) return Quickshell.screens[i]
+        for (var j = 0; j < Quickshell.screens.length; j++)
+            if (Quickshell.screens[j].name !== "eDP-1") return Quickshell.screens[j]
+        return Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
+    }
+
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrLayerKeyboardFocus.Exclusive
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     WlrLayershell.exclusiveZone: -1
     WlrLayershell.namespace: "wifi-menu"
 
@@ -29,7 +40,6 @@ PanelWindow {
                 enteredPass = ""
             }
             else {
-                root.forceActiveFocus()
                 refreshStatus()
             }
     }
@@ -669,12 +679,12 @@ PanelWindow {
         width: 390
         height: Math.ceil(mainLayout.implicitHeight + 24)
 
-        //anchors.right: parent.right
-        //anchors.top: parent.top
-        //anchors.margins: 40
-
-        x: 1042  // Distance from left edge of screen
-        y: 44   // Distance from top edge of screen
+        // Anchored to the top-right so it drops under the bar's Wi-Fi pill on any
+        // monitor. rightMargin matches the bar's own 14px inner margin.
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.rightMargin: 14
+        anchors.topMargin: 52
 
         color: cCard
         radius: cRadius
@@ -1347,7 +1357,6 @@ PanelWindow {
     }
 
     Component.onCompleted: {
-        root.requestActivate()
         refreshStatus()
         Qt.callLater(() => {
             refreshSaved()

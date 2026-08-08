@@ -171,8 +171,7 @@ Lib.Card {
 
   // ---------- UI ----------
   ColumnLayout {
-    anchors.left: parent.left
-    anchors.right: parent.right
+    Layout.fillWidth: true
     spacing: 10
 
     // Header

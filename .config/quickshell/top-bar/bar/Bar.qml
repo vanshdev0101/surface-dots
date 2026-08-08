@@ -16,7 +16,7 @@ PanelWindow {
     signal requestHubToggle()
 
     anchors { top: true; left: true; right: true }
-    height: 46
+    implicitHeight: Lib.Configuration.barExclusiveZone
     color: "transparent"
 
     // 1. GLOBAL STATE 
@@ -41,7 +41,7 @@ PanelWindow {
     }
 //--------------------------------------------------------------------------------
     WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.exclusiveZone: 46
+    WlrLayershell.exclusiveZone: Lib.Configuration.barExclusiveZone
     WlrLayershell.namespace: "shell-bar"
 //--------------------------------------------------------------------------------
     function sh(cmd) { return ["bash", "-c", cmd] }
@@ -52,7 +52,7 @@ PanelWindow {
 
     // 2. THEME
     QtObject {
-        id: palette
+        id: barPalette
         property color bg: win.isDarkMode ? Qt.rgba(0.23, 0.25, 0.22, 0.25) : '#edc5c6b0'
         property color textPrimary: win.isDarkMode ? "#d5c9b2" : "#1e2326"
         property color textSecondary: win.isDarkMode ? "#6a6f75" : "#5c6a72"
@@ -191,6 +191,20 @@ PanelWindow {
     }
     QtObject { id: acOnline; property var value: (powerPoll.value ? powerPoll.value.ac : "") }
 
+    // --- WIFI ---
+    Lib.CommandPoll {
+        id: wifiOn
+        interval: 2500
+        command: win.sh("nmcli -t -f WIFI g 2>/dev/null | head -n1 || true")
+        parse: function(o) { return String(o).trim() === "enabled" }
+    }
+    Lib.CommandPoll {
+        id: wifiSSID
+        interval: 2500
+        command: win.sh("nmcli -t -f NAME,TYPE c show --active 2>/dev/null | awk -F: '$2 ~ /wireless/ {print $1; exit}' || true")
+        parse: function(o) { return String(o).trim() }
+    }
+
     // --- ICON MAP ---
     function getIcon(cls) {
         var c = (cls || "").toLowerCase()
@@ -259,7 +273,7 @@ PanelWindow {
     Rectangle {
         anchors.fill: parent
         radius: 0
-        color: win.isDarkMode ? Qt.rgba(20/255, 23/255, 25/255, 0.92) : palette.bg
+        color: win.isDarkMode ? Qt.rgba(20/255, 23/255, 25/255, 0.92) : barPalette.bg
 
         RowLayout {
             anchors.fill: parent
@@ -340,7 +354,7 @@ PanelWindow {
                 Layout.preferredWidth: wsRow.width + 22
                 Layout.alignment: Qt.AlignVCenter
                 radius: 17
-                color: palette.bg
+                color: barPalette.bg
                 clip: true
                 property int hoveredId: 0
                 property var hoveredItem: (hoveredId > 0) ? wsRepeater.itemAt(hoveredId - 1) : null
@@ -357,7 +371,7 @@ PanelWindow {
                     height: 22
                     anchors.verticalCenter: parent.verticalCenter
                     radius: 13
-                    color: palette.activePill
+                    color: barPalette.activePill
                     Behavior on x { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
                     Behavior on width { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
                 }
@@ -374,9 +388,9 @@ PanelWindow {
                         x: t ? (wsRow.x + t.x) : 0; width: t ? t.width : 0; height: 25
                         anchors.verticalCenter: parent.verticalCenter; radius: 13
                         gradient: Gradient {
-                            GradientStop { position: 0.0; color: palette.hoverPillG0 }
-                            GradientStop { position: 0.45; color: palette.hoverPillG1 }
-                            GradientStop { position: 1.0; color: palette.hoverPillG2 }
+                            GradientStop { position: 0.0; color: barPalette.hoverPillG0 }
+                            GradientStop { position: 0.45; color: barPalette.hoverPillG1 }
+                            GradientStop { position: 1.0; color: barPalette.hoverPillG2 }
                         }
                         Behavior on x { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.10 } }
                         Behavior on width { NumberAnimation { duration: 240; easing.type: Easing.OutBack; easing.overshoot: 1.08 } }
@@ -397,7 +411,7 @@ PanelWindow {
                         height: 25
                         anchors.verticalCenter: parent.verticalCenter
                         radius: 13
-                        color: Qt.rgba(palette.textPrimary.r, palette.textPrimary.g, palette.textPrimary.b, 1)
+                        color: Qt.rgba(barPalette.textPrimary.r, barPalette.textPrimary.g, barPalette.textPrimary.b, 1)
                         opacity: 0.10
                         Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
                         Behavior on width { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -445,7 +459,7 @@ PanelWindow {
                                 font.family: barTheme.iconFont; font.pixelSize: 14; lineHeight: 0.8
                                 verticalAlignment: Text.AlignVCenter
                                 Behavior on color { ColorAnimation { duration: 140 } }
-                                color: isActive ? "#2d353b" : (wsHover.hovered ? (win.isDarkMode ? "#f2f2f2" : palette.accent) : (win.isDarkMode ? "#d5c9b2" : "#5c6a72"))
+                                color: isActive ? "#2d353b" : (wsHover.hovered ? (win.isDarkMode ? "#f2f2f2" : barPalette.accent) : (win.isDarkMode ? "#d5c9b2" : "#5c6a72"))
                             }
 
                             Row {
@@ -490,7 +504,7 @@ PanelWindow {
                                             Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
                                             color: wsDelegate.isActive ? "#2d353b" :
                                                    (modelData.urgent ? flashColor.val :
-                                                   (wsHover.hovered ? (win.isDarkMode ? "#f2f2f2" : palette.accent) :
+                                                   (wsHover.hovered ? (win.isDarkMode ? "#f2f2f2" : barPalette.accent) :
                                                    (win.isDarkMode ? "#d5c9b2" : "#1e2326")))
                                         }
 
@@ -526,7 +540,7 @@ PanelWindow {
                     visible: !parent.isPlaying
                     text: Hyprland.activeToplevel?.title ?? "Desktop"
                     font.family: barTheme.iconFont; font.weight: 700; font.pixelSize: 13
-                    color: palette.textPrimary
+                    color: barPalette.textPrimary
                     width: Math.min(implicitWidth, 500)
                     elide: Text.ElideRight
                 }
@@ -535,12 +549,12 @@ PanelWindow {
                     anchors.centerIn: parent
                     visible: parent.isPlaying
                     spacing: 10
-                    Text { text: ""; font.family: barTheme.iconFont; font.pixelSize: 14; color: palette.accent }
+                    Text { text: ""; font.family: barTheme.iconFont; font.pixelSize: 14; color: barPalette.accent }
                     Text {
-                        text: parent.parent.trackTitle + " <font color='" + palette.textSecondary + "'>- " + parent.parent.trackArtist + "</font>"
+                        text: parent.parent.trackTitle + " <font color='" + barPalette.textSecondary + "'>- " + parent.parent.trackArtist + "</font>"
                         textFormat: Text.StyledText
                         font.family: barTheme.iconFont; font.weight: 700; font.pixelSize: 13
-                        color: palette.textPrimary
+                        color: barPalette.textPrimary
                         Layout.maximumWidth: 350
                         elide: Text.ElideRight
                     }
@@ -555,9 +569,9 @@ PanelWindow {
                 height: 30
                 width: (SystemTray.items.length * 28) + 12
                 radius: 15
-                color: palette.bg
+                color: barPalette.bg
                 border.width: 1
-                border.color: palette.border
+                border.color: barPalette.border
                 Row {
                     anchors.centerIn: parent; spacing: 8
                     Repeater {
@@ -570,7 +584,7 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: width / 2
-                                color: palette.hoverSpotlight
+                                color: barPalette.hoverSpotlight
                                 opacity: trayPress.pressed ? 1.0 : (trayPress.containsMouse ? 0.8 : 0.0)
                                 Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
                             }
@@ -589,8 +603,30 @@ PanelWindow {
                 }
             }
 
+            // 11b. WIFI  (left-click toggles radio, right-click opens the network menu)
+            BarItem {
+                property bool on: Boolean(wifiOn.value)
+                property string ssid: String(wifiSSID.value || "")
+
+                icon: on ? "󰖩" : "󰖪"
+                text: on ? (ssid !== "" ? ssid : "WiFi") : "Off"
+                bgColor: barPalette.bg
+                iconColor: on ? barPalette.textPrimary : barPalette.textSecondary
+                textColor: iconColor
+                borderWidth: 0; borderColor: "transparent"; hoverColor: barPalette.hoverSpotlight
+
+                onClicked: (mouse) => {
+                    if (mouse.button === Qt.RightButton)
+                        win.det("WIFIMENU_SCREEN=" + (win.screen ? win.screen.name : "")
+                                + " quickshell -p ~/.config/quickshell/top-bar/lib/WifiMenu.qml")
+                    else
+                        win.det("nmcli radio wifi " + (on ? "off" : "on"))
+                }
+            }
+
             // 12. BATTERY
             BarItem {
+                id: battItem
                 Layout.preferredWidth: 74
                 property string status: String(batStatus.value).trim()
                 property int rawCap: Number(batCap.value) || 0
@@ -600,14 +636,14 @@ PanelWindow {
 
                 property string battColor: {
                     const dark = win.isDarkMode;
-                    if (isCharging) return palette.accent;
+                    if (isCharging) return barPalette.accent;
                     const crit = dark ? '#ff0004' : '#ff001e';
                     const low  = dark ? "#e69875" : '#a55524';
                     const mid  = dark ? "#dbbc7f" : "#7a5b00";
                     if (cap <= 10) return crit;
                     if (cap <= 20) return low;
                     if (cap <= 30) return mid;
-                    return palette.textPrimary;
+                    return barPalette.textPrimary;
                 }
                 property string dynamicIcon: {
                     if (isCharging) return "󰂄"
@@ -620,14 +656,14 @@ PanelWindow {
                 }
 
                 icon: dynamicIcon; text: cap + "%"
-                bgColor: palette.bg; iconColor: battColor; textColor: battColor
-                borderWidth: 0; borderColor: "transparent"; hoverColor: palette.hoverSpotlight
+                bgColor: barPalette.bg; iconColor: battColor; textColor: battColor
+                borderWidth: 0; borderColor: "transparent"; hoverColor: barPalette.hoverSpotlight
 
                 SequentialAnimation {
-                    running: cap <= 10 && !isCharging
+                    running: battItem.cap <= 10 && !battItem.isCharging
                     loops: Animation.Infinite
-                    NumberAnimation { target: parent; property: "opacity"; to: 0.3; duration: 500 }
-                    NumberAnimation { target: parent; property: "opacity"; to: 1.0; duration: 500 }
+                    NumberAnimation { target: battItem; property: "opacity"; to: 0.3; duration: 500 }
+                    NumberAnimation { target: battItem; property: "opacity"; to: 1.0; duration: 500 }
                 }
 
                 Rectangle {
@@ -664,7 +700,7 @@ PanelWindow {
 
                     Rectangle {
                         anchors.fill: parent
-                        color: palette.bg
+                        color: barPalette.bg
                     }
 
                     // Shimmer 
@@ -701,9 +737,9 @@ PanelWindow {
                 RowLayout {
                     id: clockRow
                     anchors.centerIn: parent; spacing: 8
-                    Text { id: dateText; text: Qt.formatDateTime(new Date(), "ddd, MMM d"); font.family: barTheme.textFont; font.pixelSize: 12; font.weight: 600; color: palette.accent }
-                    Text { text: "•"; font.pixelSize: 10; color: palette.textSecondary }
-                    Text { id: timeText; text: Qt.formatDateTime(new Date(), "h:mm AP"); font.family: barTheme.textFont; font.pixelSize: 13; font.weight: 800; color: palette.textPrimary }
+                    Text { id: dateText; text: Qt.formatDateTime(new Date(), "ddd, MMM d"); font.family: barTheme.textFont; font.pixelSize: 12; font.weight: 600; color: barPalette.accent }
+                    Text { text: "•"; font.pixelSize: 10; color: barPalette.textSecondary }
+                    Text { id: timeText; text: Qt.formatDateTime(new Date(), "h:mm AP"); font.family: barTheme.textFont; font.pixelSize: 13; font.weight: 800; color: barPalette.textPrimary }
                     Timer {
                         interval: 1000; running: true; repeat: true
                         onTriggered: { var now = new Date(); dateText.text = Qt.formatDateTime(now, "ddd, MMM d"); timeText.text = Qt.formatDateTime(now, "h:mm AP") }

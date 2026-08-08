@@ -17,15 +17,14 @@ PanelWindow {
     color: "transparent"
 
     focusable: true
-    Component.onCompleted: win.requestActivate()
 
     WlrLayershell.exclusiveZone: -1
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrLayerKeyboardFocus.Exclusive
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     // Theme + Images
     property bool isDarkMode: true
-    readonly property bool hasCustomBg: Lib.Configuration.powerMenuBgImage !== ""
+    readonly property bool hasCustomBg: !!Lib.Configuration.powerMenuBgImage && Lib.Configuration.powerMenuBgImage !== ""
     property url imgDark: hasCustomBg ? ("file://" + Lib.Configuration.powerMenuBgImage) : Qt.resolvedUrl("dark.png")
     property url imgLight: hasCustomBg ? ("file://" + Lib.Configuration.powerMenuBgImage) : Qt.resolvedUrl("light.png")
 
@@ -48,13 +47,25 @@ PanelWindow {
         property color tile: win.isDarkMode ? "#232A2E" : "#E2DFD3"
         property color tileHover: win.isDarkMode ? "#2D353B" : "#D1CEC0"
         property color text: win.isDarkMode ? "#D3C6AA" : "#5C6A72"
-        property color accent: win.isDarkMode ? '#859866' : "#6c8453"
+        property color accent: {
+            var custom = win.isDarkMode ? Lib.Configuration.powerMenuLifeAccentDark : Lib.Configuration.powerMenuLifeAccentLight
+            return (custom && custom !== "") ? custom : (win.isDarkMode ? '#859866' : "#6c8453")
+        }
         property color danger: win.isDarkMode ? "#E67E80" : "#F85552"
         property color activeText: win.isDarkMode ? "#1e2326" : "#F2F0E5"
         property url activeImg: win.isDarkMode ? win.imgDark : win.imgLight
     }
 
+    readonly property bool isCassini: Lib.Configuration.powerMenuStyle === "cassini"
+    property string cassiniSelBg: {
+        var custom = win.isDarkMode ? Lib.Configuration.powerMenuCassiniAccentDark : Lib.Configuration.powerMenuCassiniAccentLight
+        return (custom && custom !== "") ? custom : ""
+    }
+
     // Uptime/user
+    property string userName: "user"
+    property string uptime: "..."
+
     Process {
         id: sysInfo
         command: ["bash", "-c", "whoami; uptime -p | sed 's/up //'"]
@@ -63,8 +74,8 @@ PanelWindow {
             onRead: (data) => {
                 const d = data.trim()
                 if (d === "") return
-                if (/^\d/.test(d)) uptime.text = d
-                else userName.text = "@" + d
+                if (/^\d/.test(d)) win.uptime = d
+                else win.userName = d
             }
         }
     }
@@ -89,9 +100,9 @@ PanelWindow {
 
     FocusScope {
         id: root
-        width: 400
-        height: 300
-        
+        width: win.isCassini ? 600 : 400
+        height: win.isCassini ? 315 : 300
+
         // To prevent fractional blur
         x: Math.round((parent.width - width) / 2)
         y: Math.round(((parent.height - height) / 2) + ((1 - Math.min(1, intro)) * 60))
@@ -160,6 +171,8 @@ PanelWindow {
             Qt.callLater(() => root.forceActiveFocus())
         }
 
+        readonly property bool isDarkMode: win.isDarkMode
+        readonly property string cassiniSelBg: win.cassiniSelBg
         property int currentIndex: 0
         property int confirmIndex: 1 
         property string pendingCmd: ""
@@ -247,6 +260,12 @@ PanelWindow {
             root.forceActiveFocus()
         }
 
+        function cancel() {
+            pendingCmd = ""
+            confirmIndex = 1
+            root.forceActiveFocus()
+        }
+
         function getConfirmText() {
             if (pendingCmd === "shutdown") return "Power Off?"
             if (pendingCmd === "reboot") return "Reboot System?"
@@ -268,6 +287,12 @@ PanelWindow {
             if (cmd === "shutdown") Quickshell.execDetached(["systemctl", "poweroff"])
             Qt.quit()
         }
+
+        // "Living Things" skin -- only shown when not using Cassini
+        Item {
+            id: lifeSkin
+            anchors.fill: parent
+            visible: !win.isCassini
 
         // Mask Shape
         Rectangle {
@@ -318,7 +343,7 @@ PanelWindow {
                 spacing: 2
 
                 Text {
-                    text: "@" + userName.text.replace("@", "")
+                    text: "@" + win.userName
                     font.family: "Inter"
                     font.pixelSize: 15
                     font.bold: true
@@ -327,16 +352,13 @@ PanelWindow {
                 }
 
                 Text {
-                    id: uptime
-                    text: "..."
+                    text: win.uptime
                     font.family: "Inter"
                     font.pixelSize: 12
                     color: theme.text
                     opacity: 0.7
                     Layout.alignment: Qt.AlignHCenter
                 }
-
-                Text { id: userName; visible: false; text: "User" }
             }
 
             // Mode 1: Icons
@@ -484,6 +506,16 @@ PanelWindow {
             border.color: win.isDarkMode ? '#d1a8c080' : '#435133'
             antialiasing: true
             enabled: false
+        }
+        } // lifeSkin
+
+        Loader {
+            anchors.fill: parent
+            active: win.isCassini
+            visible: active
+            sourceComponent: Component {
+                Cassini { ctrl: root }
+            }
         }
     }
 }

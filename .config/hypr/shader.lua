@@ -20,25 +20,10 @@ M.current_shader = nil
 M.active_mode    = nil
 
 -- Default decoration / layout values
-M.defaults = {
-    rounding        = 7,
-    gaps_in         = 1,
-    gaps_out        = 2,
-    border_size     = 1,
-    active_border   = "rgba(87b158aa)",
-    inactive_border = "rgba(595959aa)",
-    animations      = true,
-    shadow          = true,
-    blur            = true,
-    dim_inactive    = false,
-    dim_around      = 0.6,
-    damage_tracking = 2,
-}
-
 M.ui_state = {
     theme           = "dark",
-    wallpaper_light = home .. "/Pictures/Wallpapers/6.png",
-    wallpaper_dark  = home .. "/Pictures/Wallpapers/ffx.png",
+    wallpaper_light = home .. "/Pictures/desktop/l2.png",
+    wallpaper_dark  = home .. "/Pictures/desktop/1.png",
 }
 
 -- Helpers
@@ -67,28 +52,10 @@ local function switch_theme(restore_file, new_theme)
     apply_theme(new_theme)
 end
 
+-- Reload re-reads config/decorations.lua, so gaps/borders/rounding/shader all
+-- come back from the real config instead of a hardcoded copy that drifts.
 local function restore_defaults()
-    hl.config({
-        general = {
-            gaps_in         = M.defaults.gaps_in,
-            gaps_out        = M.defaults.gaps_out,
-            border_size     = M.defaults.border_size,
-            ["col.active_border"]   = M.defaults.active_border,
-            ["col.inactive_border"] = M.defaults.inactive_border,
-        },
-        decoration = {
-            rounding     = M.defaults.rounding,
-            dim_inactive = M.defaults.dim_inactive,
-            dim_around   = M.defaults.dim_around,
-            shadow       = { enabled = M.defaults.shadow },
-            blur         = { enabled = M.defaults.blur },
-        },
-        animations = { enabled = M.defaults.animations },
-        debug      = { damage_tracking = M.defaults.damage_tracking },
-    })
-    
-    -- Isolate shader clear
-    hl.config({ decoration = { screen_shader = "" } })
+    hl.exec_cmd("hyprctl reload")
 end
 
 -- Simple shaders
@@ -97,14 +64,9 @@ M.simple_shaders = {
     ["Outdoor"]      = "outdoor.glsl",
     ["Cinema"]       = "cinema.glsl",
     ["Soft"]         = "soft.glsl",
-    ["Matte"]        = "matte.glsl",
-    ["IBM 5151"]     = "IBM5151.glsl",
     ["Fuji Acros"]   = "fuji_acros.glsl",
     ["VHS"]          = "vhs.glsl",
     ["Gameboy"]      = "gameboy.glsl",
-    ["Clarity"]      = "clarity_inefficient.glsl",
-    ["Focus"]        = "focus.glsl",
-    ["Night Vision"] = "night_vision.glsl",
 }
 
 -- Complex modes
@@ -115,7 +77,7 @@ M.complex_modes = {
             switch_theme(rm_restore_file, "light")
             write_file(rm_state_file, "on")
 
-            hl.exec_cmd("sleep 1 && awww img " .. home .. "/Pictures/Wallpapers/bahamut.jpg --transition-type none")
+            hl.exec_cmd("sleep 1 && awww img " .. home .. "/Pictures/desktop/l2.png --transition-type none")
             hl.exec_cmd("brightnessctl set 37%")
 
             hl.config({
@@ -174,9 +136,9 @@ M.complex_modes = {
         activate = function(shader_path)
             write_file(crt_state_file, "on")
 
-            hl.exec_cmd("swww img " .. home .. "/Pictures/retro/van.png --transition-type grow --transition-pos 0.5,0.5 --transition-duration 1.5 --transition-fps 60")
+            hl.exec_cmd("awww img " .. home .. "/Pictures/retro/van.png --transition-type grow --transition-pos 0.5,0.5 --transition-duration 1.5 --transition-fps 60")
 
-            hl.exec_cmd("pkill qs")
+            hl.exec_cmd("pkill -f '(quickshell|qs) -c.*top-[b]ar'")
             hl.exec_cmd("qs -p " .. home .. "/.config/quickshell/task-bar/lib/ThemeOSD.qml")
             hl.exec_cmd("waybar &")
 
@@ -203,11 +165,12 @@ M.complex_modes = {
             write_file(crt_state_file, "off")
 
             hl.exec_cmd("pkill waybar")
-            hl.exec_cmd("qs -c task-bar &")
+            hl.exec_cmd("pkill -f '[T]hemeOSD.qml'")
+            hl.exec_cmd("qs -c top-bar &")
 
             local saved_theme = read_file(theme_mode_file, "dark")
             local wp = saved_theme == "light" and home .. "/Pictures/desktop/l2.png" or home .. "/Pictures/desktop/1.png"
-            hl.exec_cmd("swww img " .. wp .. " --transition-type none")
+            hl.exec_cmd("awww img " .. wp .. " --transition-type none")
 
             restore_defaults()
         end,

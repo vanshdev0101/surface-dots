@@ -1,7 +1,7 @@
 .pragma library
 
 // hardcoding just for now.
-var PROFILE_IMG = "/home/vanshc/.config/quickshell/snes-hub/profile.jpg"
+var PROFILE_IMG = "/home/vanshc/.config/quickshell/top-bar/profile.jpg"
 var PROFILE_NAME = "snes"
 
 var TOP_GAP = 50

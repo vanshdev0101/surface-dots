@@ -1,12 +1,27 @@
 # surface-dots
 
-My personal linux dotfiles.
-Also, please check out my calendar app: [Evercal](https://github.com/snes19xx/EverCal)
+My personal linux dotfiles, forked from [snes19xx/surface-dots](https://github.com/snes19xx/surface-dots) and tuned to fit my own workflow.
+Also, please check out the original author's calendar app: [Evercal](https://github.com/snes19xx/EverCal)
+
+---
+
+## Changes in this fork
+
+Everything below documents the base setup; here's what's different here specifically:
+
+- **Fixed an intermittent password-lockout bug** — a background process was silently retrying a sudo command with no TTY on every bar launch and racking up `pam_faillock` strikes, which occasionally rejected the correct password until reboot. Also fixed the autostart ordering (one unconfigured service was blocking everything launched after it), a Kvantum theme path issue, and the cursor theme not resetting properly.
+- **Top-bar mode now has a full Settings panel** (`top-bar/hub/SettingsCard.qml`), matching taskbar mode's — HSL color pickers, Appearance/Power Menu/Weather API/Layout & Bar/Screen Borders/Profile as sectioned cards. Previously top-bar mode only had plain hex fields. Layout & Bar swaps the dock/workspace toggles for a bar-height slider (drives `WlrLayershell.exclusiveZone` directly) and a `→ Task-bar layout` switch button.
+- **Remapped keybinds** to match muscle memory from my previous setup — see the updated [Keybindings](#hyprland) section below.
+- **Fixed rofi/OSD/power-menu popup animations** — the example configs use `layerrule = {"animation slide, rofi"}`, which is pre-0.55 syntax and is silently a no-op on newer Hyprland. Switched to `hl.layer_rule({ match = {...}, animation = "slide" })` and repositioned the popups to anchor bottom-left instead of center.
+- **Added an audio output switcher** (`rofi/audio-output.sh`, bound to `SUPER + SHIFT + A`) to flip between speakers/bluetooth output.
+- **Fixed the layout-switch buttons spawning duplicate bar instances** — `qs` is a symlink to `quickshell`, and Linux reports a different process name depending on which one you invoke it by, so the old `pkill qs` in the switch button never matched instances launched via `quickshell -c ...` (or vice versa). Both switch buttons now invoke and kill consistently through `qs -c <name>`.
+- Smoothed out window-move and workspace-switch animations, and CPU/GPU/fan monitoring in the bar.
 
 ---
 
 ## Table of contents
 
+- [Changes in this fork](#changes-in-this-fork)
 - [Screenshots](#screenshots)
 - [Dependencies](#dependencies)
 - [Installation](#Installation)
@@ -139,49 +154,60 @@ chmod +x surface-dots-installer
 <details>
   <summary><strong>Keybindings</strong></summary>
 
+> [!NOTE]
+> These reflect this fork's `hyprland.lua`, remapped from upstream to match muscle memory from my previous setup — if you're coming from the base repo, several of these moved (e.g. terminal is now `SUPER + Return`, not `SUPER + Q`).
+
 ### Apps
 
-- `SUPER + Q` → terminal (`kitty`)
-- `SUPER + E` → file manager (`thunar`)
-- `SUPER + R` → app drawer (you need to reprogram it to rofi script in top-bar layout)
+- `SUPER + Return` → terminal (`kitty`)
+- `SUPER + E` → file manager (`dolphin`)
+- `SUPER + SPACE` → rofi app launcher (top-bar mode)
 - `SUPER + B` → firefox
-- `SUPER + D` → reading mode
-- `SUPER + N` → night light
-- `SUPER + S` → my custom ocr app
+- `SUPER + T` → music player (`tauon`)
+- `SUPER + V` → clipboard manager
+- `SUPER + C` → shader picker (all 16)
+- `SUPER + P` → color picker (`hyprpicker`)
+- `CTRL + SHIFT + Escape` → task manager (`btop`)
+
+### Hub / Settings
+
+- `SUPER + A` → toggle hub on or off
+- `SUPER + Z` → jump straight to Settings in the hub
+- `SUPER + SHIFT + A` → switch audio output (speakers/bluetooth)
 
 ### Window actions
 
-- `SUPER + SPACE` → toggle hub on or off
-- `SUPER + X` → kill active window
-- `SUPER + F` → toggle floating (simple)
-- `SUPER + ALT + F` → toggle floating **and** set size `900x600` + center
-- `SUPER + M` → fullscreen
-- `SUPER + P` → pseudotile
-- `SUPER + UP` → togglesplit
-- `SUPER + DOWN` → togglesplit
+- `SUPER + Q` <i>or</i> `SUPER + X` → close active window
+- `SUPER + F` → fullscreen
+- `SUPER + ALT + F` → pseudotile
+- `SUPER + UP` <i>or</i> `SUPER + DOWN` → togglesplit
+- `SUPER + G` → toggle group
+- `SUPER + CTRL + Left/Right` → previous/next workspace
 
 ### Exit
 
 - `ALT + F4` → Power menu
 - `SUPER + ALT + F4` → exit Hyprland
+- `SUPER + L` → lock screen
 
 ### Focus (arrow keys)
 
 - `SUPER + Left/Right` → move focus horizontally
 - `SUPER + UP/Down` → move focus vertically
+- `SUPER + SHIFT + arrows` → move the active window in that direction
+- `ALT + Tab` → cycle through open windows
 
 ### Workspaces
 
 - `SUPER + 1..0` → workspace `1..10`
 - `SUPER + SHIFT + 1..0` → move active window to workspace `1..10`
 - `SUPER + mouse wheel` → next/prev workspace
-- `SUPER + G` → toggle group
-- `SUPER+CTRL+LEFT/RIGHT` → move across grouped windows
 
 ### Scratchpad (“special workspace”)
 
 - `SUPER + H` → toggle special workspace `magic`
 - `SUPER + SHIFT + S` → move active window to `special:magic`
+- `SUPER + S` → move active window to the currently focused workspace
 
 ### Mouse (window move/resize)
 
@@ -193,6 +219,12 @@ chmod +x surface-dots-installer
 - `Print` → Screen snip
 - `SUPER + Print` <i>or</i> `SUPER + O` → Capture screen
 - `SUPER + SHIFT + Print` → Window capture
+
+### Media & function keys
+
+- `XF86AudioRaiseVolume` / `XF86AudioLowerVolume` / `XF86AudioMute` → volume
+- `XF86MonBrightnessUp` / `XF86MonBrightnessDown` → brightness
+- `XF86AudioPlay` → play/pause media
 
 </details>
 
@@ -403,21 +435,19 @@ If you want a lightweight fallback, an earlier **AGS** version is available in `
 
 ### Settings Panel
 
-There's finally a settings panel (`hub/SettingsPanel.qml`) so you don't have to edit files for everything.
+There's finally a settings panel so you don't have to edit files for everything.
 
-Open it by:
-
-- Clicking the settings button in the Hub header
-- Pressing the `s` key while the hub is focused
+- **Taskbar mode** (`hub/SettingsPanel.qml`): click the settings button in the Hub header, or press `s` while the hub is focused.
+- **Top-bar mode** (`top-bar/hub/SettingsCard.qml`): press `SUPER + Z` to jump straight to it (opens the hub if it isn't already open).
 
 It swaps the hub content in place and lets you change:
 
 - Appearance (theme + accent/colors)
 - Weather API location
 - Power menu skin (Living Things or Cassini) and its accent
-- Layout & taskbar tweaks
+- Layout & bar/taskbar tweaks (taskbar mode: dock/workspace mode + exclusive zone; top-bar mode: bar-height slider, plus a button to switch layouts)
 - Screen borders
-- Profile picture & events
+- Profile picture & events (taskbar mode also shows an Events stepper)
 
 Not everything is wired through it yet, some styling still is in `lib/ThemeEngine.qml` and `theme.js`, but it covers most of the common stuff now.
 
@@ -885,7 +915,7 @@ _A: First, make sure the script has executable permissions. Next, verify the the
 _A: By default it reads from `~/Pictures/Wallpapers`, set `PAPEL_DIR` if yours live somewhere else. It also needs `awww` running to actually set the wallpaper, and `bin/papel` has to be executable. If you just added new wallpapers, hit the refresh button so it re-scans the folder._
 
 **Q: How do I switch the power menu skin?** <br>
-_A: Open the settings panel (taskbar mode) and go to the power menu section, you can pick between Living Things and Cassini there, and set a custom accent for each one._
+_A: Open the settings panel (either layout — `s` in taskbar mode, `SUPER + Z` in top-bar mode) and go to the power menu section, you can pick between Living Things and Cassini there, and set a custom accent for each one._
 
 **Q: The weather is wrong or not showing up. How do I fix it?** <br>
 _A: Set your location in the weather section of the settings panel, or edit `lib/weather.sh` directly. It pulls from the Open-Meteo API so you need `curl` and `jq` installed and a working connection._

@@ -293,18 +293,6 @@ PanelWindow {
             spacing: 14
 // LEFT----------------------------------------------------------------------------------------------------------
 
-            // 6. RAM
-            BarItem {
-                property int usedPct: Number(ramPoll.value) || 0
-                property string ramColor: usedPct >= 90 ? (win.isDarkMode ? "#ff0004" : "#ff001e")
-                    : usedPct >= 75 ? (win.isDarkMode ? "#e69875" : "#a55524")
-                    : barPalette.textPrimary
-
-                icon: "󰍛"; text: usedPct + "%"
-                bgColor: barPalette.bg; iconColor: ramColor; textColor: ramColor
-                borderWidth: 0; borderColor: "transparent"; hoverColor: barPalette.hoverSpotlight
-            }
-
             // 7. LAUNCHER
             Item {
                 Layout.preferredWidth: 36
@@ -616,6 +604,18 @@ PanelWindow {
                     else
                         win.det("nmcli radio wifi " + (on ? "off" : "on"))
                 }
+            }
+
+            // 11c. RAM
+            BarItem {
+                property int usedPct: Number(ramPoll.value) || 0
+                property string ramColor: usedPct >= 90 ? (win.isDarkMode ? "#ff0004" : "#ff001e")
+                    : usedPct >= 75 ? (win.isDarkMode ? "#e69875" : "#a55524")
+                    : barPalette.textPrimary
+
+                icon: "󰍛"; text: usedPct + "%"
+                bgColor: barPalette.bg; iconColor: ramColor; textColor: ramColor
+                borderWidth: 0; borderColor: "transparent"; hoverColor: barPalette.hoverSpotlight
             }
 
             // 12. BATTERY

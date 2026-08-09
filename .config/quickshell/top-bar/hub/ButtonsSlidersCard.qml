@@ -184,6 +184,26 @@ Lib.Card {
     det("dunstctl set-paused " + (next ? "true" : "false"))
   }
 
+  // --- CAFFEINE (keep-awake) ---
+  // hypridle owns every idle timeout (dim, lock, DPMS, suspend) -- killing it
+  // is a full "stay awake", relaunching it restores normal idle behavior.
+  property bool caffeine: false
+
+  Lib.CommandPoll {
+    id: caffeinePoll
+    running: root.active && root.visible
+    interval: 4000
+    command: sh("pgrep -x hypridle >/dev/null 2>&1 && echo false || echo true")
+    parse: function(o) { return String(o).trim() === "true" }
+    onUpdated: root.caffeine = value
+  }
+
+  function toggleCaffeine() {
+    var next = !root.caffeine
+    root.caffeine = next
+    det(next ? "pkill -x hypridle" : "pkill -x hypridle; hypridle")
+  }
+
   // --- UI ---
   ColumnLayout {
     spacing: 12
@@ -234,6 +254,14 @@ Lib.Card {
         label: root.dnd ? "Silent" : "Notify"
         active: root.dnd
         onClicked: toggleDnd()
+      }
+
+      Lib.ExpressiveButton {
+        theme: root.theme
+        icon: root.caffeine ? "caffeine_on.svg" : "caffeine_off.svg"
+        label: root.caffeine ? "Awake" : "Caffeine"
+        active: root.caffeine
+        onClicked: toggleCaffeine()
       }
     }
 

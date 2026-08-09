@@ -180,6 +180,7 @@ hl.layer_rule({ name = "bright-osd-anim", match = { namespace = "^brightness-osd
 hl.layer_rule({ name = "theme-osd-anim",  match = { namespace = "^theme-osd$" },       animation = "slide" })
 hl.layer_rule({ name = "power-menu-anim", match = { namespace = "^power-menu$" },      animation = "popin", dim_around = true })
 hl.layer_rule({ name = "hub-anim",        match = { namespace = "^snes-hub$" },        animation = "slide top" })
+hl.layer_rule({ name = "keybinds-anim",   match = { namespace = "^keybinds-cheat$" },  animation = "popin", dim_around = true })
 
 -- =========================================================================
 -- Animations
@@ -227,6 +228,7 @@ hl.bind(mod .. " + A", hl.dsp.global("quickshell:hubToggle")) -- QuickShell Hub
 hl.bind(mod .. " + SHIFT + A", hl.dsp.exec_cmd("bash " .. home .. "/.config/rofi/audio-output.sh")) -- Switch audio output
 hl.bind(mod .. " + SPACE", hl.dsp.exec_cmd("bash -c 'pkill -x rofi || ([ \"$(cat ~/.cache/quickshell/theme_mode 2>/dev/null)\" = light ] && ~/.config/rofi/launcher_2.sh || ~/.config/rofi/launcher.sh)'"))  -- Rofi app launcher (top-bar mode)
 hl.bind(mod .. " + C", hl.dsp.exec_cmd("bash -c 'pkill -x rofi || { [ \"$(cat ~/.cache/quickshell/theme_mode 2>/dev/null)\" = light ] && s=shaders_menu_light.sh t=style-light || s=shaders_menu.sh t=style-dark; rofi -show shaders -modi \"shaders:$HOME/.config/rofi/$s\" -theme \"$HOME/.config/rofi/$t.rasi\"; }'"))  -- Shader picker (all 16)
+hl.bind(mod .. " + SLASH", hl.dsp.exec_cmd("bash -c 'hyprctl layers | grep -q keybinds-cheat && pkill -f \"quickshell -p.*keybinds-cheatsheet\" || quickshell -p " .. home .. "/.config/quickshell/keybinds-cheatsheet/Main.qml'"))  -- Keybinds cheat sheet
 
 -- Apps
 hl.bind(mod .. " + Q", hl.dsp.window.close())

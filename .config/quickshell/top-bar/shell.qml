@@ -69,6 +69,12 @@ ShellRoot {
         onPressed: toggleSettingsPanel()
     }
 
+    GlobalShortcut {
+        name: "randomWallpaper"
+        description: "Apply a random wallpaper"
+        onPressed: hub.randomWallpaper()
+    }
+
     Variants {
         model: Quickshell.screens
 

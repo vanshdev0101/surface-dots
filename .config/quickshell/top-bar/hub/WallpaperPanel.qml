@@ -62,6 +62,22 @@ Item {
     property bool live: true
     signal closeRequested()
 
+    // Pick and apply a random wallpaper -- same apply path a thumbnail click
+    // uses (papel socket write + palette extraction), callable from a global
+    // keybind without the Hub/panel needing to be open.
+    function applyRandomWallpaper() {
+        if (wallpaperModel.count === 0) return
+        var idx = Math.floor(Math.random() * wallpaperModel.count)
+        var item = wallpaperModel.get(idx)
+        root.appliedFullPath  = item.full_path
+        root.appliedThumbPath = item.thumb_path
+        root.appliedFileName  = item.file_name
+        backend.write("apply:" + item.full_path + "\n")
+        backend.flush()
+        root.triggerToast("wallpaper applied")
+        paletteCanvas.extractFrom(item.thumb_path)
+    }
+
     //  Theme aliases 
     readonly property color rBg:      theme ? theme.bgCard        : "#1e2326"
     readonly property color rItem:    theme ? theme.bgItem         : "#2d353b"

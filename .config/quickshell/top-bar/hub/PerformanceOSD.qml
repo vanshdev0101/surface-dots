@@ -77,22 +77,34 @@ PanelWindow {
 
     Rectangle {
         id: box
-        anchors { top: parent.top; horizontalCenter: parent.horizontalCenter; topMargin: 54 }
+        // Flush against the bar's own bottom edge -- no gap -- so this reads
+        // as the bar extending downward, not a separate floating popup.
+        anchors { top: parent.top; horizontalCenter: parent.horizontalCenter; topMargin: Lib.Configuration.barExclusiveZone }
         width: 620
         height: card.implicitHeight + 40
-        radius: theme.radiusOuter
-        // Semi-transparent, not a flat opaque fill -- gives real depth
-        // alongside the shadow layer below, per the "soft shadow,
-        // semi-transparent background" spec.
-        color: Qt.rgba(theme.bgMain.r, theme.bgMain.g, theme.bgMain.b, 0.92)
-        border.width: 1
-        border.color: theme.border
+        // Square top corners (matches the bar's own radius: 0), rounded
+        // bottom corners only -- one continuous shape, not two stacked
+        // rounded rectangles with a visible seam between them.
+        topLeftRadius: 0
+        topRightRadius: 0
+        bottomLeftRadius: theme.radiusOuter
+        bottomRightRadius: theme.radiusOuter
+        // Exact same color expression the bar itself uses (Bar.qml's own
+        // background Rectangle), not theme.bgMain -- the bar's background is
+        // a fixed color, not wallpaper-derived, so matching it pixel-for-
+        // pixel means mirroring that same fixed expression here rather than
+        // a theoretically "more correct" but visually different theme color.
+        color: theme.isDarkMode ? Qt.rgba(20/255, 23/255, 25/255, 0.92) : "#edc5c6b0"
+        // No border -- a border line at the top edge would recreate exactly
+        // the seam this is trying to remove; the shadow below carries the
+        // depth cue instead, and blends in on all other edges too.
 
         Rectangle {
             z: -1
             anchors.fill: parent
             anchors.topMargin: 12
-            radius: parent.radius
+            bottomLeftRadius: theme.radiusOuter
+            bottomRightRadius: theme.radiusOuter
             color: "black"
             opacity: theme.isDarkMode ? 0.35 : 0.20
         }

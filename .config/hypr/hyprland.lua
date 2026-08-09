@@ -229,7 +229,8 @@ hl.bind(mod .. " + SHIFT + A", hl.dsp.exec_cmd("bash " .. home .. "/.config/rofi
 hl.bind(mod .. " + SPACE", hl.dsp.exec_cmd("bash -c 'pkill -x rofi || ([ \"$(cat ~/.cache/quickshell/theme_mode 2>/dev/null)\" = light ] && ~/.config/rofi/launcher_2.sh || ~/.config/rofi/launcher.sh)'"))  -- Rofi app launcher (top-bar mode)
 hl.bind(mod .. " + C", hl.dsp.exec_cmd("bash -c 'pkill -x rofi || { [ \"$(cat ~/.cache/quickshell/theme_mode 2>/dev/null)\" = light ] && s=shaders_menu_light.sh t=style-light || s=shaders_menu.sh t=style-dark; rofi -show shaders -modi \"shaders:$HOME/.config/rofi/$s\" -theme \"$HOME/.config/rofi/$t.rasi\"; }'"))  -- Shader picker (all 16)
 hl.bind(mod .. " + SLASH", hl.dsp.exec_cmd("bash -c 'hyprctl layers | grep -q keybinds-cheat && pkill -f \"quickshell -p.*keybinds-cheatsheet\" || quickshell -p " .. home .. "/.config/quickshell/keybinds-cheatsheet/Main.qml'"))  -- Keybinds cheat sheet
-hl.bind(mod .. " + SHIFT + W", hl.dsp.global("quickshell:randomWallpaper")) -- Random wallpaper
+hl.bind(mod .. " + SHIFT + W", hl.dsp.global("quickshell:nextWallpaper")) -- Next wallpaper
+hl.bind(mod .. " + SHIFT + Q", hl.dsp.global("quickshell:prevWallpaper")) -- Previous wallpaper
 
 -- Apps
 hl.bind(mod .. " + Q", hl.dsp.window.close())

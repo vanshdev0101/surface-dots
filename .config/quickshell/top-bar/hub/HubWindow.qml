@@ -80,7 +80,8 @@ PanelWindow {
     property int rightGap: 10
     property int panelW: win.settingsPanelOpen ? 480 : 320
 
-    function randomWallpaper() { wallpaperPanel.applyRandomWallpaper() }
+    function nextWallpaper() { wallpaperPanel.applyOffsetWallpaper(1) }
+    function prevWallpaper() { wallpaperPanel.applyOffsetWallpaper(-1) }
 
     function executeAction(action) {
         var cmd = ""

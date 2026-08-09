@@ -70,9 +70,15 @@ ShellRoot {
     }
 
     GlobalShortcut {
-        name: "randomWallpaper"
-        description: "Apply a random wallpaper"
-        onPressed: hub.randomWallpaper()
+        name: "nextWallpaper"
+        description: "Switch to the next wallpaper"
+        onPressed: hub.nextWallpaper()
+    }
+
+    GlobalShortcut {
+        name: "prevWallpaper"
+        description: "Switch to the previous wallpaper"
+        onPressed: hub.prevWallpaper()
     }
 
     Variants {

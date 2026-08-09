@@ -216,6 +216,32 @@ PanelWindow {
         }
     }
 
+    // --- CPU / GPU (for the bar-center performance cluster) ---
+    Lib.CommandPoll {
+        id: cpuPoll
+        interval: 3000
+        command: win.sh(`
+            temp=$(sensors -A 2>/dev/null | grep Tctl | grep -oP '\\+\\K[0-9.]+' | head -n1)
+            usage=$(top -bn1 | grep 'Cpu(s)' | awk '{print 100-$8}')
+            echo "\${temp:-0}|\${usage:-0}"
+        `)
+        parse: function(o) {
+            var p = String(o).trim().split("|")
+            return { temp: Math.round(parseFloat(p[0])) || 0, usage: Math.round(parseFloat(p[1])) || 0 }
+        }
+    }
+
+    Lib.CommandPoll {
+        id: gpuPoll
+        interval: 3000
+        command: win.sh("nvidia-smi --query-gpu=temperature.gpu,utilization.gpu --format=csv,noheader,nounits 2>/dev/null || true")
+        parse: function(o) {
+            var p = String(o).trim().split(",").map(function(s) { return s.trim() })
+            var t = parseFloat(p[0]), u = parseFloat(p[1])
+            return { temp: isFinite(t) ? Math.round(t) : -1, usage: isFinite(u) ? Math.round(u) : -1 }
+        }
+    }
+
     // --- ICON MAP ---
     function getIcon(cls) {
         var c = (cls || "").toLowerCase()
@@ -537,40 +563,68 @@ PanelWindow {
             }
 //------------------------------------------------- CENTER -----------------------------------------------------
 
-            // 9. MEDIA & TITLE 
+            // 9. PERFORMANCE
             Item {
+                id: perfItem
                 Layout.fillWidth: true
                 Layout.preferredHeight: 36
-                property var player: Mpris.players.values[0] ?? null
-                property bool isPlaying: player && player.playbackState === MprisPlaybackState.Playing
-                property string trackTitle: player ? player.trackTitle : ""
-                property string trackArtist: player ? player.trackArtist : ""
 
-                Text {
-                    anchors.centerIn: parent
-                    visible: !parent.isPlaying
-                    text: Hyprland.activeToplevel?.title ?? "Desktop"
-                    font.family: barTheme.iconFont; font.weight: 700; font.pixelSize: 13
-                    color: barPalette.textPrimary
-                    width: Math.min(implicitWidth, 500)
-                    elide: Text.ElideRight
+                readonly property int cpuTemp: cpuPoll.value ? cpuPoll.value.temp : 0
+                readonly property int cpuUsage: cpuPoll.value ? cpuPoll.value.usage : 0
+                readonly property int gpuTemp: gpuPoll.value ? gpuPoll.value.temp : -1
+                readonly property int gpuUsage: gpuPoll.value ? gpuPoll.value.usage : -1
+                readonly property int ramUsage: Number(ramPoll.value) || 0
+
+                readonly property string warnColor: win.isDarkMode ? "#e69875" : "#a55524"
+                readonly property string critColor: win.isDarkMode ? "#ff0004" : "#ff001e"
+                function tempColor(t) {
+                    if (t >= 90) return critColor
+                    if (t >= 75) return warnColor
+                    return barPalette.textPrimary
                 }
 
                 RowLayout {
+                    id: perfRow
                     anchors.centerIn: parent
-                    visible: parent.isPlaying
-                    spacing: 10
-                    Text { text: ""; font.family: barTheme.iconFont; font.pixelSize: 14; color: barPalette.accent }
-                    Text {
-                        text: parent.parent.trackTitle + " <font color='" + barPalette.textSecondary + "'>- " + parent.parent.trackArtist + "</font>"
-                        textFormat: Text.StyledText
-                        font.family: barTheme.iconFont; font.weight: 700; font.pixelSize: 13
-                        color: barPalette.textPrimary
-                        Layout.maximumWidth: 350
-                        elide: Text.ElideRight
+                    spacing: 16
+
+                    RowLayout {
+                        visible: perfItem.gpuTemp >= 0
+                        spacing: 4
+                        Text { text: "GPU"; font.family: barTheme.textFont; font.pixelSize: 11; color: barPalette.textSecondary }
+                        Text {
+                            text: perfItem.gpuTemp + "\u00b0C"
+                            font.family: barTheme.iconFont; font.weight: 700; font.pixelSize: 13
+                            color: perfItem.tempColor(perfItem.gpuTemp)
+                        }
+                    }
+
+                    Rectangle { visible: perfItem.gpuTemp >= 0; width: 1; height: 14; color: barPalette.border; opacity: 0.5 }
+
+                    RowLayout {
+                        spacing: 4
+                        Text { text: "CPU"; font.family: barTheme.textFont; font.pixelSize: 11; color: barPalette.textSecondary }
+                        Text {
+                            text: perfItem.cpuTemp + "\u00b0C"
+                            font.family: barTheme.iconFont; font.weight: 700; font.pixelSize: 13
+                            color: perfItem.tempColor(perfItem.cpuTemp)
+                        }
+                    }
+
+                    Rectangle { width: 1; height: 14; color: barPalette.border; opacity: 0.5 }
+
+                    RowLayout {
+                        spacing: 4
+                        Text { text: "RAM"; font.family: barTheme.textFont; font.pixelSize: 11; color: barPalette.textSecondary }
+                        Text {
+                            text: perfItem.ramUsage + "%"
+                            font.family: barTheme.iconFont; font.weight: 700; font.pixelSize: 13
+                            color: perfItem.tempColor(perfItem.ramUsage >= 90 ? 90 : (perfItem.ramUsage >= 75 ? 75 : 0))
+                        }
                     }
                 }
             }
+
 
 //----------------------------------------------------------------------------------------RIGHT----------
 
@@ -633,18 +687,6 @@ PanelWindow {
                     else
                         win.det("nmcli radio wifi " + (on ? "off" : "on"))
                 }
-            }
-
-            // 11c. RAM
-            BarItem {
-                property int usedPct: Number(ramPoll.value) || 0
-                property string ramColor: usedPct >= 90 ? (win.isDarkMode ? "#ff0004" : "#ff001e")
-                    : usedPct >= 75 ? (win.isDarkMode ? "#e69875" : "#a55524")
-                    : barPalette.textPrimary
-
-                icon: "󰍛"; text: usedPct + "%"
-                bgColor: barPalette.bg; iconColor: ramColor; textColor: ramColor
-                borderWidth: 0; borderColor: "transparent"; hoverColor: barPalette.hoverSpotlight
             }
 
             // 12. BATTERY

@@ -62,20 +62,49 @@ Item {
     property bool live: true
     signal closeRequested()
 
-    // Pick and apply a random wallpaper -- same apply path a thumbnail click
-    // uses (papel socket write + palette extraction), callable from a global
-    // keybind without the Hub/panel needing to be open.
-    function applyRandomWallpaper() {
+    // Step to the next/previous wallpaper in the list (wrapping), relative to
+    // whichever one is currently applied -- same apply path a thumbnail click
+    // uses (papel socket write), callable from a global keybind without the
+    // Hub/panel needing to be open. direction: +1 or -1.
+    function applyOffsetWallpaper(direction) {
         if (wallpaperModel.count === 0) return
-        var idx = Math.floor(Math.random() * wallpaperModel.count)
+        var curIdx = -1
+        for (var i = 0; i < wallpaperModel.count; i++) {
+            if (wallpaperModel.get(i).full_path === root.appliedFullPath) { curIdx = i; break }
+        }
+        var n = wallpaperModel.count
+        var idx = ((curIdx < 0 ? 0 : curIdx) + direction) % n
+        if (idx < 0) idx += n
         var item = wallpaperModel.get(idx)
         root.appliedFullPath  = item.full_path
         root.appliedThumbPath = item.thumb_path
         root.appliedFileName  = item.file_name
         backend.write("apply:" + item.full_path + "\n")
         backend.flush()
-        root.triggerToast("wallpaper applied")
-        paletteCanvas.extractFrom(item.thumb_path)
+        root.triggerToast(item.file_name)
+        // The Canvas-based extractor below only paints while this panel is
+        // part of a visible scene graph (Qt Quick doesn't run onPaint for an
+        // invisible item tree, and this panel is `visible: win.wallpaperMode`,
+        // false whenever triggered via keybind with the Hub closed). Use a
+        // headless ImageMagick extraction instead so it works either way.
+        headlessExtractProcess.exec(["bash", "-c",
+            "magick '" + item.thumb_path + "' -resize 6x4! -depth 8 txt:- 2>/dev/null | tail -n +2 | grep -oP '#[0-9A-F]{6}'"])
+    }
+
+    Process {
+        id: headlessExtractProcess
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var hexList = text.trim().split("\n").filter(function(s) { return s.length > 0 })
+                var pal = hexList.map(function(hex) {
+                    var h = hex.replace("#", "")
+                    return Qt.rgba(parseInt(h.substr(0,2),16)/255, parseInt(h.substr(2,2),16)/255, parseInt(h.substr(4,2),16)/255, 1.0)
+                })
+                root.palette = pal
+                root.applyAutoAccent(pal)
+            }
+        }
     }
 
     //  Theme aliases 
@@ -128,15 +157,38 @@ Item {
     function refresh() {
         backend.connected = false
         wallpaperModel.clear()
+        // Remove the stale socket file explicitly -- if the old papel didn't
+        // unlink it on exit (SIGKILL, crash), the new instance's bind() fails
+        // silently against the leftover file and papel just dies immediately.
         Quickshell.execDetached(["bash", "-c",
-            "pkill -fx '" + root.papelBin + "' 2>/dev/null; sleep 0.1; " +
+            "pkill -fx '" + root.papelBin + "' 2>/dev/null; sleep 0.15; " +
+            "rm -f '" + backend.path + "'; " +
             "'" + root.papelBin + "' &"])
+        connectTimer.attempts = 0
         connectTimer.restart()
     }
 
     Component.onCompleted: refresh()
 
-    Timer { id: connectTimer; interval: 500; onTriggered: backend.connected = true }
+    // papel can take longer than 500ms to bind (scanning/thumbnailing the
+    // wallpaper dir before it opens the socket), so a single fixed-delay
+    // attempt can miss the window and leave wallpaperModel empty for the
+    // rest of the session with no recovery. Retry until it actually connects.
+    Timer {
+        id: connectTimer
+        interval: 500
+        repeat: true
+        property int attempts: 0
+        onTriggered: {
+            attempts += 1
+            backend.connected = false
+            backend.connected = true
+            if (wallpaperModel.count > 0 || attempts >= 20) {
+                connectTimer.stop()
+                connectTimer.attempts = 0
+            }
+        }
+    }
     Timer { id: toastTimer;   interval: 1600; onTriggered: root.showToast = false }
 
     //  Layout 

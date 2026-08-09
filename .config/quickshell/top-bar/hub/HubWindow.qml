@@ -199,7 +199,7 @@ PanelWindow {
                         theme: theme
                     }
 
-                    GpuCard {
+                    PerformanceDashboardCard {
                         Layout.fillWidth: true
                         active: win.batteryCardActive
                         theme: theme

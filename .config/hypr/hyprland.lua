@@ -181,6 +181,7 @@ hl.layer_rule({ name = "theme-osd-anim",  match = { namespace = "^theme-osd$" },
 hl.layer_rule({ name = "power-menu-anim", match = { namespace = "^power-menu$" },      animation = "popin", dim_around = true })
 hl.layer_rule({ name = "hub-anim",        match = { namespace = "^snes-hub$" },        animation = "slide top" })
 hl.layer_rule({ name = "keybinds-anim",   match = { namespace = "^keybinds-cheat$" },  animation = "popin", dim_around = true })
+hl.layer_rule({ name = "perf-osd-anim",   match = { namespace = "^performance-osd$" }, animation = "popin", dim_around = true })
 
 -- =========================================================================
 -- Animations

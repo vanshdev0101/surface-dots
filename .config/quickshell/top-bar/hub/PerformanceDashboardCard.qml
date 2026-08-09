@@ -1,12 +1,17 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
-import "../lib" as Lib
+import Quickshell.Io
 
-Lib.Card {
+// Self-contained (no "../lib" import) -- this is only ever loaded from
+// PerformanceOSD.qml via `quickshell -p`, and Quickshell's qmlscanner
+// refuses to resolve non-singleton types (Lib.Card, Lib.CommandPoll) from
+// outside the inferred config-folder root in that context. Inlines the
+// same Process+Timer pattern Lib.CommandPoll wraps.
+
+Item {
     id: root
-    Layout.fillWidth: true
-
+    property QtObject theme: null
     property bool active: false
 
     readonly property bool themed: root.theme !== null
@@ -15,13 +20,8 @@ Lib.Card {
     readonly property color accent:        themed ? root.theme.accent        : "#a7c080"
     readonly property color trackColor:    themed ? root.theme.bgItem        : "#2d353b"
 
-    property real contentHeight: contentLayout.implicitHeight + (root.pad * 2)
-    implicitHeight: root.active ? contentHeight : 0
-    Behavior on implicitHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-    opacity: root.active ? 1.0 : 0.0
-    Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutQuad } }
-    visible: implicitHeight > 1
-    clip: true
+    implicitWidth: contentLayout.implicitWidth
+    implicitHeight: contentLayout.implicitHeight
 
     readonly property string warnColor: themed && root.theme.isDarkMode ? "#e69875" : "#a55524"
     readonly property string critColor: themed && root.theme.isDarkMode ? "#ff0004" : "#ff001e"
@@ -31,9 +31,34 @@ Lib.Card {
         return accent
     }
 
-    Lib.CommandPoll {
+    component Poller: QtObject {
+        id: pollerRoot
+        property int interval: 3000
+        property var command: []
+        property var parse: function(out) { return out }
+        property bool running: true
+        property var value: null
+        function poll() {
+            if (!running || proc.running || !command || command.length === 0) return
+            proc.exec(command)
+        }
+        property Process proc: Process {
+            stdout: StdioCollector {
+                onStreamFinished: pollerRoot.value = pollerRoot.parse(text ?? "")
+            }
+        }
+        property Timer timer: Timer {
+            interval: pollerRoot.interval
+            repeat: true
+            running: pollerRoot.running
+            triggeredOnStart: true
+            onTriggered: pollerRoot.poll()
+        }
+    }
+
+    Poller {
         id: gpuPoll
-        running: root.active && root.visible
+        running: root.active
         interval: 3000
         command: ["bash", "-lc",
             "nvidia-smi --query-gpu=temperature.gpu,utilization.gpu --format=csv,noheader,nounits 2>/dev/null || true"]
@@ -44,9 +69,9 @@ Lib.Card {
         }
     }
 
-    Lib.CommandPoll {
+    Poller {
         id: cpuPoll
-        running: root.active && root.visible
+        running: root.active
         interval: 3000
         command: ["bash", "-lc", `
             temp=$(sensors -A 2>/dev/null | grep Tctl | grep -oP '\\+\\K[0-9.]+' | head -n1)
@@ -59,9 +84,9 @@ Lib.Card {
         }
     }
 
-    Lib.CommandPoll {
+    Poller {
         id: ramPoll
-        running: root.active && root.visible
+        running: root.active
         interval: 5000
         command: ["bash", "-lc",
             "awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END{u=t-a; printf \"%.1f|%.0f\", u/1024/1024, (t-a)/t*100}' /proc/meminfo"]
@@ -76,9 +101,8 @@ Lib.Card {
 
     ColumnLayout {
         id: contentLayout
+        anchors.fill: parent
         spacing: 8
-        Layout.fillWidth: true
-        z: 1
 
         Text {
             text: "Performance"

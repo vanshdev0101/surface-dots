@@ -205,44 +205,6 @@ PanelWindow {
         parse: function(o) { return String(o).trim() }
     }
 
-    // --- RAM ---
-    Lib.CommandPoll {
-        id: ramPoll
-        interval: 5000
-        command: win.sh("awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END{u=t-a; printf \"%.1f|%.0f\", u/1024/1024, (t-a)/t*100}' /proc/meminfo")
-        parse: function(o) {
-            var p = String(o).trim().split("|")
-            var used = parseFloat(p[0]), pct = parseInt(p[1])
-            return { used: isFinite(used) ? used : 0, pct: isFinite(pct) ? pct : 0 }
-        }
-    }
-
-    // --- CPU / GPU (for the bar-center performance cluster) ---
-    Lib.CommandPoll {
-        id: cpuPoll
-        interval: 3000
-        command: win.sh(`
-            temp=$(sensors -A 2>/dev/null | grep Tctl | grep -oP '\\+\\K[0-9.]+' | head -n1)
-            usage=$(top -bn1 | grep 'Cpu(s)' | awk '{print 100-$8}')
-            echo "\${temp:-0}|\${usage:-0}"
-        `)
-        parse: function(o) {
-            var p = String(o).trim().split("|")
-            return { temp: Math.round(parseFloat(p[0])) || 0, usage: Math.round(parseFloat(p[1])) || 0 }
-        }
-    }
-
-    Lib.CommandPoll {
-        id: gpuPoll
-        interval: 3000
-        command: win.sh("nvidia-smi --query-gpu=temperature.gpu,utilization.gpu --format=csv,noheader,nounits 2>/dev/null || true")
-        parse: function(o) {
-            var p = String(o).trim().split(",").map(function(s) { return s.trim() })
-            var t = parseFloat(p[0]), u = parseFloat(p[1])
-            return { temp: isFinite(t) ? Math.round(t) : -1, usage: isFinite(u) ? Math.round(u) : -1 }
-        }
-    }
-
     // --- ICON MAP ---
     function getIcon(cls) {
         var c = (cls || "").toLowerCase()
@@ -570,63 +532,25 @@ PanelWindow {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 36
 
-                readonly property int cpuTemp: cpuPoll.value ? cpuPoll.value.temp : 0
-                readonly property int cpuUsage: cpuPoll.value ? cpuPoll.value.usage : 0
-                readonly property int gpuTemp: gpuPoll.value ? gpuPoll.value.temp : -1
-                readonly property int gpuUsage: gpuPoll.value ? gpuPoll.value.usage : -1
-                readonly property real ramUsedGb: ramPoll.value ? ramPoll.value.used : 0
-                readonly property int ramPct: ramPoll.value ? ramPoll.value.pct : 0
-
-                readonly property string warnColor: win.isDarkMode ? "#e69875" : "#a55524"
-                readonly property string critColor: win.isDarkMode ? "#ff0004" : "#ff001e"
-                function tempColor(t) {
-                    if (t >= 90) return critColor
-                    if (t >= 75) return warnColor
-                    return barPalette.textPrimary
+                Text {
+                    anchors.centerIn: parent
+                    text: "Performance"
+                    font.family: barTheme.textFont; font.weight: 700; font.pixelSize: 13
+                    color: perfMa.containsMouse ? barPalette.accent : barPalette.textPrimary
+                    Behavior on color { ColorAnimation { duration: 120 } }
                 }
 
-                RowLayout {
-                    id: perfRow
-                    anchors.centerIn: parent
-                    spacing: 16
-
-                    RowLayout {
-                        visible: perfItem.gpuTemp >= 0
-                        spacing: 4
-                        Text { text: "GPU"; font.family: barTheme.textFont; font.pixelSize: 11; color: barPalette.textSecondary }
-                        Text {
-                            text: perfItem.gpuTemp + "\u00b0C"
-                            font.family: barTheme.iconFont; font.weight: 700; font.pixelSize: 13
-                            color: perfItem.tempColor(perfItem.gpuTemp)
-                        }
-                    }
-
-                    Rectangle { visible: perfItem.gpuTemp >= 0; width: 1; height: 14; color: barPalette.border; opacity: 0.5 }
-
-                    RowLayout {
-                        spacing: 4
-                        Text { text: "CPU"; font.family: barTheme.textFont; font.pixelSize: 11; color: barPalette.textSecondary }
-                        Text {
-                            text: perfItem.cpuTemp + "\u00b0C"
-                            font.family: barTheme.iconFont; font.weight: 700; font.pixelSize: 13
-                            color: perfItem.tempColor(perfItem.cpuTemp)
-                        }
-                    }
-
-                    Rectangle { width: 1; height: 14; color: barPalette.border; opacity: 0.5 }
-
-                    RowLayout {
-                        spacing: 4
-                        Text { text: "RAM"; font.family: barTheme.textFont; font.pixelSize: 11; color: barPalette.textSecondary }
-                        Text {
-                            text: perfItem.ramUsedGb.toFixed(1) + "GiB"
-                            font.family: barTheme.iconFont; font.weight: 700; font.pixelSize: 13
-                            color: perfItem.tempColor(perfItem.ramPct >= 90 ? 90 : (perfItem.ramPct >= 75 ? 75 : 0))
-                        }
-                    }
+                MouseArea {
+                    id: perfMa
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: win.det(
+                        "hyprctl layers | grep -q performance-osd && " +
+                        "pkill -f 'quickshell -p.*PerformanceOSD' || " +
+                        "quickshell -p /home/vanshc/.config/quickshell/top-bar/hub/PerformanceOSD.qml")
                 }
             }
-
 
 //----------------------------------------------------------------------------------------RIGHT----------
 

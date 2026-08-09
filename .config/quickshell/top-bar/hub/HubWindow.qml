@@ -199,12 +199,6 @@ PanelWindow {
                         theme: theme
                     }
 
-                    PerformanceDashboardCard {
-                        Layout.fillWidth: true
-                        active: win.batteryCardActive
-                        theme: theme
-                    }
-
                     MediaCard {
                         id: media
                         Layout.fillWidth: true

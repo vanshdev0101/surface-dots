@@ -209,10 +209,11 @@ PanelWindow {
     Lib.CommandPoll {
         id: ramPoll
         interval: 5000
-        command: win.sh("awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END{printf \"%.0f\", (t-a)/t*100}' /proc/meminfo")
+        command: win.sh("awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END{u=t-a; printf \"%.1f|%.0f\", u/1024/1024, (t-a)/t*100}' /proc/meminfo")
         parse: function(o) {
-            var n = parseInt(String(o).trim())
-            return isFinite(n) ? n : 0
+            var p = String(o).trim().split("|")
+            var used = parseFloat(p[0]), pct = parseInt(p[1])
+            return { used: isFinite(used) ? used : 0, pct: isFinite(pct) ? pct : 0 }
         }
     }
 
@@ -573,7 +574,8 @@ PanelWindow {
                 readonly property int cpuUsage: cpuPoll.value ? cpuPoll.value.usage : 0
                 readonly property int gpuTemp: gpuPoll.value ? gpuPoll.value.temp : -1
                 readonly property int gpuUsage: gpuPoll.value ? gpuPoll.value.usage : -1
-                readonly property int ramUsage: Number(ramPoll.value) || 0
+                readonly property real ramUsedGb: ramPoll.value ? ramPoll.value.used : 0
+                readonly property int ramPct: ramPoll.value ? ramPoll.value.pct : 0
 
                 readonly property string warnColor: win.isDarkMode ? "#e69875" : "#a55524"
                 readonly property string critColor: win.isDarkMode ? "#ff0004" : "#ff001e"
@@ -617,9 +619,9 @@ PanelWindow {
                         spacing: 4
                         Text { text: "RAM"; font.family: barTheme.textFont; font.pixelSize: 11; color: barPalette.textSecondary }
                         Text {
-                            text: perfItem.ramUsage + "%"
+                            text: perfItem.ramUsedGb.toFixed(1) + "GiB"
                             font.family: barTheme.iconFont; font.weight: 700; font.pixelSize: 13
-                            color: perfItem.tempColor(perfItem.ramUsage >= 90 ? 90 : (perfItem.ramUsage >= 75 ? 75 : 0))
+                            color: perfItem.tempColor(perfItem.ramPct >= 90 ? 90 : (perfItem.ramPct >= 75 ? 75 : 0))
                         }
                     }
                 }

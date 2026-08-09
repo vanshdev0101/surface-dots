@@ -196,6 +196,12 @@ PanelWindow {
                         theme: theme
                     }
 
+                    GpuCard {
+                        Layout.fillWidth: true
+                        active: win.batteryCardActive
+                        theme: theme
+                    }
+
                     MediaCard {
                         id: media
                         Layout.fillWidth: true
@@ -215,6 +221,12 @@ PanelWindow {
                         active: win.visible
                         compactMode: media.visible || battery.visible || header.expanded
                         dndActive: buttons.dnd
+                        theme: theme
+                    }
+
+                    GithubCard {
+                        Layout.fillWidth: true
+                        active: win.visible
                         theme: theme
                     }
                 }

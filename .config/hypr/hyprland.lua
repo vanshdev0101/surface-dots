@@ -250,7 +250,7 @@ hl.bind(mod .. " + UP",   hl.dsp.layout("togglesplit"))
 hl.bind(mod .. " + G",    hl.dsp.group.toggle())
 
 hl.bind(mod .. " + L", hl.dsp.exec_cmd("hyprlock"))
-hl.bind(alt .. " + Tab", function() hl.dispatch(hl.dsp.window.cycle_next()) end)
+hl.bind(alt .. " + Tab", hl.dsp.focus({ last = true }))
 
 hl.bind(mod .. " + CTRL + left",  hl.dsp.focus({ workspace = "-1" }))
 hl.bind(mod .. " + CTRL + right", hl.dsp.focus({ workspace = "+1" }))

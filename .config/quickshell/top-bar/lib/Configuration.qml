@@ -38,6 +38,9 @@ Scope {
     // Empty = fall back to config.js's hardcoded default
     property string profileImageOverride: ""
 
+    // Empty = GitHub stats card stays hidden
+    property string githubUsername: ""
+
     // Bar layer: also drives the bar's own visible height
     property int barExclusiveZone: 46
 
@@ -73,6 +76,7 @@ Scope {
             weatherLat:           root.weatherLat,
             weatherLon:           root.weatherLon,
             profileImageOverride: root.profileImageOverride,
+            githubUsername:       root.githubUsername,
             barExclusiveZone:     root.barExclusiveZone,
             borderThickness:      root.borderThickness,
             borderFrameColor:     String(root.borderFrameColor),
@@ -126,6 +130,7 @@ Scope {
             if (d.weatherLat           !== undefined) root.weatherLat           = d.weatherLat
             if (d.weatherLon           !== undefined) root.weatherLon           = d.weatherLon
             if (d.profileImageOverride !== undefined) root.profileImageOverride = d.profileImageOverride
+            if (d.githubUsername       !== undefined) root.githubUsername       = d.githubUsername
             if (d.barExclusiveZone     !== undefined) root.barExclusiveZone     = d.barExclusiveZone
             if (d.borderThickness      !== undefined) root.borderThickness      = d.borderThickness
             if (d.borderFrameColor     !== undefined) root.borderFrameColor     = d.borderFrameColor

@@ -302,6 +302,11 @@ Item {
                     text: Lib.Configuration.profileImageOverride
                     onEditingFinished: { Lib.Configuration.profileImageOverride = text; Lib.Configuration.save() }
                 }
+                SField {
+                    label: "GitHub username (for the Hub's GitHub card)"
+                    text: Lib.Configuration.githubUsername
+                    onEditingFinished: { Lib.Configuration.githubUsername = text; Lib.Configuration.save() }
+                }
             }
         }
     }

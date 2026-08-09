@@ -205,6 +205,17 @@ PanelWindow {
         parse: function(o) { return String(o).trim() }
     }
 
+    // --- RAM ---
+    Lib.CommandPoll {
+        id: ramPoll
+        interval: 5000
+        command: win.sh("awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END{printf \"%.0f\", (t-a)/t*100}' /proc/meminfo")
+        parse: function(o) {
+            var n = parseInt(String(o).trim())
+            return isFinite(n) ? n : 0
+        }
+    }
+
     // --- ICON MAP ---
     function getIcon(cls) {
         var c = (cls || "").toLowerCase()
@@ -622,6 +633,18 @@ PanelWindow {
                     else
                         win.det("nmcli radio wifi " + (on ? "off" : "on"))
                 }
+            }
+
+            // 11c. RAM
+            BarItem {
+                property int usedPct: Number(ramPoll.value) || 0
+                property string ramColor: usedPct >= 90 ? (win.isDarkMode ? "#ff0004" : "#ff001e")
+                    : usedPct >= 75 ? (win.isDarkMode ? "#e69875" : "#a55524")
+                    : barPalette.textPrimary
+
+                icon: "󰍛"; text: usedPct + "%"
+                bgColor: barPalette.bg; iconColor: ramColor; textColor: ramColor
+                borderWidth: 0; borderColor: "transparent"; hoverColor: barPalette.hoverSpotlight
             }
 
             // 12. BATTERY

@@ -1004,8 +1004,9 @@ PanelWindow {
                     
                     // Battery
                     TaskbarItem {
+                    id: batteryTaskItem
                     Layout.preferredWidth: 60
-                    
+
                     icon: batteryState.dynamicIcon
                     text: batteryState.cap + "%"
                     bgColor: palette.bg
@@ -1015,8 +1016,8 @@ PanelWindow {
                     SequentialAnimation {
                         running: batteryState.cap <= 10 && !batteryState.isCharging
                         loops: Animation.Infinite
-                        NumberAnimation { target: parent; property: "opacity"; to: 0.3; duration: 500 }
-                        NumberAnimation { target: parent; property: "opacity"; to: 1.0; duration: 500 }
+                        NumberAnimation { target: batteryTaskItem; property: "opacity"; to: 0.3; duration: 500 }
+                        NumberAnimation { target: batteryTaskItem; property: "opacity"; to: 1.0; duration: 500 }
                     }
                 }
                     

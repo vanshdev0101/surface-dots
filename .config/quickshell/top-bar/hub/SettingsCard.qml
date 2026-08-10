@@ -237,7 +237,7 @@ Item {
                         SBtn {
                             label: "→ Task-bar layout"; accent: true
                             onTriggered: Quickshell.execDetached(["bash", "-c",
-                                "pkill -f 'qs -c'; sleep 0.5; qs -c task-bar"])
+                                "pkill -f '^qs -c'; sleep 0.5; setsid qs -c task-bar >/dev/null 2>&1 & disown"])
                         }
                     }
                 }

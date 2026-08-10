@@ -50,7 +50,7 @@ hl.env("XCURSOR_SIZE",     "24")
 hl.env("GDK_BACKEND",     "wayland,x11,*")
 hl.env("CLUTTER_BACKEND", "wayland")
 hl.env("TERMINAL",        "kitty")
-hl.env("QT_QPA_PLATFORMTHEME", "kde")
+hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 hl.env("QT_STYLE_OVERRIDE",    "kvantum")
 hl.env("PAPEL_DIR", home .. "/Pictures/wallpapers")
 hl.env("QT_QPA_PLATFORM",      "wayland;xcb")
@@ -181,6 +181,8 @@ hl.layer_rule({ name = "theme-osd-anim",  match = { namespace = "^theme-osd$" },
 hl.layer_rule({ name = "power-menu-anim", match = { namespace = "^power-menu$" },      animation = "popin", dim_around = true })
 hl.layer_rule({ name = "hub-anim",        match = { namespace = "^snes-hub$" },        animation = "slide top" })
 hl.layer_rule({ name = "keybinds-anim",   match = { namespace = "^keybinds-cheat$" },  animation = "popin", dim_around = true })
+hl.layer_rule({ name = "shell-bar-anim",  match = { namespace = "^shell-bar$" },       animation = "fade" })
+hl.layer_rule({ name = "task-bar-anim",   match = { namespace = "^task-bar-shell$" },  animation = "fade" })
 
 -- =========================================================================
 -- Animations

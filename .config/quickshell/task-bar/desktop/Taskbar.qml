@@ -15,8 +15,9 @@ PanelWindow {
     anchors { bottom: true; left: true; right: true }
     height: 50
     margins { bottom: -14 }
-    color: "transparent"    
+    color: "transparent"
     WlrLayershell.exclusiveZone: Lib.Configuration.taskbarExclusiveZone
+    WlrLayershell.namespace: "task-bar-shell"
 
 
     // -----------------------------------------------

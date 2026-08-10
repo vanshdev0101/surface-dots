@@ -13,6 +13,12 @@ Lib.Card {
     readonly property color textSecondary: themed ? root.theme.textSecondary : "#9da9a0"
     readonly property color accent:        themed ? root.theme.accent        : "#a7c080"
     readonly property color accentAlt:     themed ? root.theme.accentSlider  : "#7AA1A6"
+    readonly property color accentRed:     themed ? root.theme.accentRed     : "#e67e80"
+    readonly property color bgItem:        themed ? root.theme.bgItem        : "#2d353b"
+    readonly property color bgCard:        themed ? root.theme.bgCard        : "#1e2326"
+    readonly property color healthColor:   Qt.rgba(accentAlt.r, accentAlt.g, accentAlt.b, 0.5)
+    readonly property string textFont:     themed ? root.theme.textFont : "Manrope"
+    readonly property string iconFont:     themed ? root.theme.iconFont : "JetBrainsMono Nerd Font"
 
     property real contentHeight: contentLayout.implicitHeight + (root.pad * 2)
 
@@ -37,215 +43,291 @@ Lib.Card {
         z: 0
     }
 
+    // DATA POLLERS
+    Lib.CommandPoll {
+        id: sysInfo
+        running: root.active && root.visible
+        interval: 600000
+        command: ["uname", "-r"]
+        parse: function(out) { return String(out).trim() }
+    }
+
+    Lib.CommandPoll {
+        id: cpu
+        running: root.active && root.visible
+        interval: 3000
+        property var prevIdle: 0; property var prevTotal: 0
+        command: ["bash","-lc","grep 'cpu ' /proc/stat"]
+        parse: function(out) {
+            var parts = String(out).split(/\s+/)
+            var idle = Number(parts[4]) + Number(parts[5])
+            var total = 0
+            for (var i=1; i<parts.length; i++) total += Number(parts[i])
+            var diffTotal = total - prevTotal
+            var usage = (diffTotal > 0) ? (1 - ((idle - prevIdle) / diffTotal)) * 100 : 0
+            prevIdle = idle; prevTotal = total
+            return Math.round(usage)
+        }
+    }
+
+    Lib.CommandPoll {
+        id: ram
+        running: root.active && root.visible
+        interval: 4000
+        command: ["bash","-lc","awk '/MemTotal/ {t=$2} /MemAvailable/ {a=$2} END{ if(t>0) printf(\"%d\", (100-(a*100/t))); else print \"0\" }' /proc/meminfo || true"]
+        parse: function(o) { return Number(String(o).trim()) || 0 }
+    }
+
     Lib.CommandPoll {
         id: batteryPoll
         running: root.active && root.visible
         interval: 8000
         command: ["bash", "-lc", "upower -i /org/freedesktop/UPower/devices/battery_BAT1 2>/dev/null || true"]
         parse: function(out) {
-            var info = {
-                percentage: 0,
-                capacity: 0,
-                cycles: 0,
-                energyFull: "",
-                energyFullDesign: "",
-                timeRemaining: "",
-                state: ""
-            }
-
+            var info = { percentage: 0, capacity: 0, cycles: 0, state: "", time: "" }
             var lines = String(out || "").split("\n")
             for (var i = 0; i < lines.length; i++) {
                 var line = lines[i].trim()
-                if (!line || line.indexOf(":") === -1) continue
-
                 var parts = line.split(":")
-                var key = parts.shift().trim().toLowerCase()
-                var value = parts.join(":").trim()
+                if (parts.length < 2) continue
+                var k = parts[0].trim().toLowerCase()
+                var v = parts.slice(1).join(":").trim()
 
-                if (key === "percentage") info.percentage = parseFloat(value)
-                else if (key === "capacity") info.capacity = parseFloat(value)
-                else if (key === "charge cycles" || key === "charge-cycles") info.cycles = parseInt(value)
-                else if (key === "energy-full") info.energyFull = value
-                else if (key === "energy-full-design") info.energyFullDesign = value
-                else if (key === "time to empty" || key === "time to full") info.timeRemaining = value
-                else if (key === "state") info.state = value
+                if (k === "percentage") info.percentage = parseFloat(v)
+                else if (k === "capacity") info.capacity = parseFloat(v)
+                else if (k === "state") info.state = v
+                else if (k.includes("time to")) info.time = v
+                else if (k.includes("cycles")) info.cycles = parseInt(v)
             }
-
             return info
         }
     }
 
-    // Null safeties
-    readonly property var batteryInfo: batteryPoll.value || ({})
-    // Clamp health percentage
-    readonly property real healthPercent: Math.max(0, Math.min(100, Number(batteryInfo.capacity) || 0))
-    readonly property string cyclesText: isFinite(batteryInfo.cycles) && batteryInfo.cycles > 0
-        ? String(batteryInfo.cycles)
-        : "—"
-    readonly property string energyText: (batteryInfo.energyFull && batteryInfo.energyFullDesign)
-        ? (batteryInfo.energyFull + " / " + batteryInfo.energyFullDesign)
-        : "—"
-    readonly property string timeText: batteryInfo.timeRemaining
-        || (batteryInfo.state === "fully-charged" ? "Full" : "—")
-    readonly property string stateText: batteryInfo.state
-        ? (batteryInfo.state.charAt(0).toUpperCase() + batteryInfo.state.slice(1))
-        : "Unknown"
+    readonly property var bat: batteryPoll.value || {}
+    readonly property int batP: Math.round(bat.percentage || 0)
+    readonly property int batHealth: Math.round(bat.capacity || 100)
+    readonly property string batState: bat.state ? (bat.state.charAt(0).toUpperCase() + bat.state.slice(1)) : "Unknown"
+    readonly property bool isCharging: bat.state === "charging"
 
+    // HELPERS
+    function getStatusColor(percentage) {
+        if (percentage > 75) {
+            return root.isDark ? Qt.rgba(0.8, 0.3, 0.3, 0.25) : Qt.rgba(1.0, 0.0, 0.0, 0.15)
+        } else if (percentage > 50) {
+            return root.isDark ? Qt.rgba(0.8, 0.6, 0.2, 0.20) : Qt.rgba(1.0, 0.7, 0.0, 0.15)
+        }
+        return root.bgItem
+    }
+
+    function getStatusIconColor(percentage) {
+        if (percentage > 75) return root.accentRed
+        if (percentage > 50) return root.isDark ? "#e3be5c" : "#d4a017"
+        return root.textPrimary
+    }
+
+    // UI LAYOUT
     ColumnLayout {
         id: contentLayout
-        spacing: 8
-        Layout.fillWidth: true
+        anchors.fill: parent
+        anchors.margins: root.pad
+        anchors.bottomMargin: root.pad * 2
+        spacing: 12
         z: 1
 
+        // ROW 1: Header + kernel
         RowLayout {
             Layout.fillWidth: true
-            spacing: 0
-
             Text {
-                text: "Battery Health  "
+                text: "System Status"
                 color: root.textPrimary
-                font.family: root.theme ? root.theme.textFont : "Manrope"
-                font.pixelSize: 10
-                font.weight: Font.DemiBold
+                font.family: root.textFont
+                font.pixelSize: 11
+                font.weight: Font.Bold
             }
-
+            Item { Layout.fillWidth: true }
             Text {
-                text: "󱟢"
-                color: root.textPrimary
-                font.family: root.theme ? root.theme.textFont : "Manrope"
-                font.pixelSize: 20 // Set the battery icon size independently
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignLeft
-            }
-
-            Text {
-                text: root.stateText
+                text: sysInfo.value || "Linux"
                 color: root.textSecondary
-                font.family: root.theme ? root.theme.textFont : "Manrope"
-                font.pixelSize: 10
+                font.family: root.textFont
+                font.pixelSize: 12
             }
         }
 
-        ColumnLayout {
-            spacing: 4
+        // ROW 2: CPU / RAM tiles + Battery box
+        RowLayout {
             Layout.fillWidth: true
+            Layout.preferredHeight: 150
+            spacing: 12
 
             RowLayout {
-                Layout.fillWidth: true
-
-                Text {
-                    text: Math.round(root.healthPercent) + "% capacity"
-                    color: root.textPrimary
-                    font.family: root.theme ? root.theme.textFont : "Manrope"
-                    font.pixelSize: 12
-                    Layout.fillWidth: true
-                }
-
-                Text {
-                    text: "Charge " + Math.round(Number(batteryInfo.percentage) || 0) + "%"
-                    color: root.textSecondary
-                    font.family: root.theme ? root.theme.textFont : "Manrope"
-                    font.pixelSize: 10
-                }
-            }
-            // Health Bar
-            Rectangle {
-                id: barTrack
-                Layout.fillWidth: true
-                height: 7
-                radius: 4
-                color: themed ? root.theme.bgItem : "#2d353b"
-
-                Rectangle {
-                    id: barFill
-                    height: parent.height
-                    radius: parent.radius
-                    width: Math.max(4, parent.width * (root.healthPercent / 100))
-                    color: root.accentAlt
-                    Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
-                }
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 16
-
-            ColumnLayout {
-                Layout.fillWidth: true
+                Layout.fillHeight: true
                 Layout.preferredWidth: 1
-                spacing: 1
+                Layout.fillWidth: true
+                spacing: 10
 
-                Text {
-                    text: "Cycles"
-                    color: root.textSecondary
-                    font.family: root.theme ? root.theme.textFont : "Manrope"
-                    font.pixelSize: 9
-                    opacity: 0.8
-                    horizontalAlignment: Text.AlignHCenter
+                // CPU
+                Rectangle {
                     Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    radius: 9
+                    color: getStatusColor(cpu.value || 0)
+                    Behavior on color { ColorAnimation { duration: 300 } }
+
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        Text {
+                            text: ""
+                            font.family: root.iconFont
+                            font.pixelSize: 36
+                            color: getStatusIconColor(cpu.value || 0)
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                        Text {
+                            text: (cpu.value || 0) + "%"
+                            font.family: root.textFont
+                            font.pixelSize: 14
+                            font.weight: Font.Bold
+                            color: root.textPrimary
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                        Text {
+                            text: "CPU"
+                            font.family: root.textFont
+                            font.pixelSize: 10
+                            color: root.textSecondary
+                            opacity: 0.9
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                    }
                 }
 
-                Text {
-                    text: root.cyclesText
-                    color: root.textPrimary
-                    font.family: root.theme ? root.theme.textFont : "Manrope"
-                    font.pixelSize: 13
-                    font.weight: Font.Medium
-                    horizontalAlignment: Text.AlignHCenter
+                // RAM
+                Rectangle {
                     Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    radius: 9
+                    color: getStatusColor(ram.value || 0)
+                    Behavior on color { ColorAnimation { duration: 300 } }
+
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        Text {
+                            text: ""
+                            font.family: root.iconFont
+                            font.pixelSize: 36
+                            color: getStatusIconColor(ram.value || 0)
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                        Text {
+                            text: (ram.value || 0) + "%"
+                            font.family: root.textFont
+                            font.pixelSize: 14
+                            font.weight: Font.Bold
+                            color: root.textPrimary
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                        Text {
+                            text: "RAM"
+                            font.family: root.textFont
+                            font.pixelSize: 10
+                            color: root.textSecondary
+                            opacity: 0.9
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                    }
                 }
             }
 
-            ColumnLayout {
+            // Battery
+            Rectangle {
+                Layout.fillHeight: true
+                Layout.preferredWidth: 1.2
                 Layout.fillWidth: true
-                Layout.preferredWidth: 2
-                spacing: 1
+                color: root.bgItem
+                radius: 8
 
-                Text {
-                    text: "Energy (full / design)"
-                    color: root.textSecondary
-                    font.family: root.theme ? root.theme.textFont : "Manrope"
-                    font.pixelSize: 9
-                    opacity: 0.8
-                    horizontalAlignment: Text.AlignHCenter
-                    Layout.fillWidth: true
-                }
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 14
+                    anchors.topMargin: 8
+                    anchors.bottomMargin: 22
+                    spacing: 0
 
-                Text {
-                    text: root.energyText
-                    color: root.textPrimary
-                    font.family: root.theme ? root.theme.textFont : "Manrope"
-                    font.pixelSize: 10
-                    font.weight: Font.Medium
-                    horizontalAlignment: Text.AlignHCenter
-                    Layout.fillWidth: true
-                }
-            }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Text {
+                            text: "Battery"
+                            color: root.textSecondary
+                            font.pixelSize: 12
+                            font.weight: Font.Bold
+                            font.family: root.textFont
+                        }
+                        Item { Layout.fillWidth: true }
+                        Text {
+                            text: root.batState
+                            color: root.textSecondary
+                            font.pixelSize: 11
+                            font.family: root.textFont
+                            opacity: 0.6
+                        }
+                    }
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1.5
-                spacing: 1
+                    RowLayout {
+                        spacing: 8
+                        Layout.alignment: Qt.AlignLeft
 
-                Text {
-                    text: "Time remaining"
-                    color: root.textSecondary
-                    font.family: root.theme ? root.theme.textFont : "Manrope"
-                    font.pixelSize: 9
-                    opacity: 0.8
-                    horizontalAlignment: Text.AlignHCenter
-                    Layout.fillWidth: true
-                }
+                        Text {
+                            text: root.isCharging ? "󰂄" : "󱟢"
+                            color: root.isCharging ? root.accentAlt : root.textPrimary
+                            font.family: root.iconFont
+                            font.pixelSize: 24
+                            Layout.alignment: Qt.AlignBaseline
+                        }
+                        Text {
+                            text: root.batP + "%"
+                            color: root.textPrimary
+                            font.family: root.textFont
+                            font.pixelSize: 24
+                            font.weight: Font.Bold
+                            Layout.alignment: Qt.AlignBaseline
+                        }
+                    }
 
-                Text {
-                    text: root.timeText
-                    color: root.textPrimary
-                    font.family: root.theme ? root.theme.textFont : "Manrope"
-                    font.pixelSize: 10
-                    font.weight: Font.Medium
-                    horizontalAlignment: Text.AlignHCenter
-                    Layout.fillWidth: true
+                    Item { Layout.fillHeight: true; Layout.preferredHeight: 2 }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        RowLayout {
+                            Text { text: "Overall Health"; color: root.textSecondary; font.pixelSize: 9; font.family: root.textFont }
+                            Item { Layout.fillWidth: true }
+                            Text { text: root.batHealth + "%"; color: root.healthColor; font.pixelSize: 9; font.family: root.textFont; font.weight: Font.Bold }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true; height: 8; radius: 1; color: Qt.rgba(1,1,1,0.08)
+                            Rectangle {
+                                height: parent.height; radius: 3; color: root.healthColor
+                                width: Math.max(3, parent.width * (root.batHealth / 100))
+                                Behavior on width { NumberAnimation { duration: 250 } }
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: root.bat.time ? (root.bat.time + " remaining") : (root.bat.cycles ? (root.bat.cycles + " Cycles") : "—")
+                        color: root.textSecondary
+                        font.family: root.textFont
+                        font.pixelSize: 11
+                        opacity: 0.9
+                        Layout.topMargin: 6
+                    }
                 }
             }
         }

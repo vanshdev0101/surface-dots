@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects
 import "../lib" as Lib
 
 Lib.Card {
@@ -101,6 +102,46 @@ Lib.Card {
     readonly property int batHealth: Math.round(bat.capacity || 100)
     readonly property string batState: bat.state ? (bat.state.charAt(0).toUpperCase() + bat.state.slice(1)) : "Unknown"
     readonly property bool isCharging: bat.state === "charging"
+
+    // FAN SPEED (hp-wmi pwm1)
+    property string fanState: "auto"
+    property bool _fanChanging: false
+
+    Lib.CommandPoll {
+        id: fanPoll
+        running: root.active && root.visible && !root._fanChanging
+        interval: 5000
+        command: ["bash", "-lc", `H=$(grep -l '^hp$' /sys/class/hwmon/hwmon*/name 2>/dev/null | head -1 | xargs dirname); if [ -n "$H" ]; then echo "$(cat "$H/pwm1_enable"):$(cat "$H/pwm1")"; else echo "2:0"; fi`]
+        parse: function(o) {
+            var parts = String(o).trim().split(":")
+            var enable = parts[0], pwm = Number(parts[1]) || 0
+            if (enable !== "1") return "auto"
+            if (pwm < 128) return "low"
+            if (pwm < 220) return "med"
+            return "max"
+        }
+        onUpdated: root.fanState = value
+    }
+
+    Timer { id: fanLockout; interval: 5000; onTriggered: root._fanChanging = false }
+
+    function toggleFan() {
+        root._fanChanging = true
+        fanLockout.restart()
+        var next = (root.fanState === "auto") ? "low"
+                 : (root.fanState === "low")  ? "med"
+                 : (root.fanState === "med")  ? "max" : "auto"
+        root.fanState = next
+        Lib.Shell.det("sudo /usr/local/bin/set-fan-speed " + next)
+    }
+
+    function getFanLabel() { return root.fanState.charAt(0).toUpperCase() + root.fanState.slice(1) }
+    function getFanColor() {
+        if (root.fanState === "auto") return root.accent
+        if (root.fanState === "low")  return root.textPrimary
+        if (root.fanState === "med")  return root.theme.accentSlider2
+        return root.theme.accentRed
+    }
 
 
     // HELPERS
@@ -341,8 +382,63 @@ Lib.Card {
                         opacity: 0.9
                         Layout.topMargin: 6
                     }
-                    
+
                 }
+            }
+        }
+
+        // ROW 3: Fan speed
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 36
+            radius: 8
+            color: root.bgItem
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 12
+                anchors.rightMargin: 12
+                spacing: 8
+
+                Item {
+                    width: 16; height: 16
+                    Image {
+                        id: fanIconImg
+                        anchors.fill: parent
+                        source: "../lib/fan.svg"
+                        sourceSize: Qt.size(width, height)
+                        visible: false
+                    }
+                    ColorOverlay {
+                        anchors.fill: fanIconImg
+                        source: fanIconImg
+                        color: root.getFanColor()
+                    }
+                }
+
+                Text {
+                    text: "Fan"
+                    color: root.textPrimary
+                    font.family: root.theme.textFont
+                    font.pixelSize: 12
+                    font.weight: Font.Medium
+                }
+
+                Item { Layout.fillWidth: true }
+
+                Text {
+                    text: root.getFanLabel()
+                    color: root.getFanColor()
+                    font.family: root.theme.textFont
+                    font.pixelSize: 12
+                    font.weight: Font.DemiBold
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.toggleFan()
             }
         }
     }

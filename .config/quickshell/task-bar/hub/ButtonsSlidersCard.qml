@@ -123,44 +123,6 @@ Lib.Card {
     Theme.accentRed : (root.theme ? root.theme.textPrimary : Theme.fgMain)
   }
   // --------------------------------------------------------------------------------------------------------------
-  // Fan speed (hp-wmi pwm1)
-  property string fanState: "auto"
-  property bool _fanChanging: false
-  Lib.CommandPoll {
-    id: fanPoll;
-    running: root.active && root.visible && !root._fanChanging; interval: 5000
-    command: Lib.Shell.sh(`H=$(grep -l '^hp$' /sys/class/hwmon/hwmon*/name 2>/dev/null | head -1 | xargs dirname); if [ -n "$H" ]; then echo "$(cat "$H/pwm1_enable"):$(cat "$H/pwm1")"; else echo "2:0"; fi`)
-    parse: function(o) {
-      var parts = String(o).trim().split(":")
-      var enable = parts[0], pwm = Number(parts[1]) || 0
-      if (enable !== "1") return "auto"
-      if (pwm < 128) return "low"
-      if (pwm < 220) return "med"
-      return "max"
-    }
-    onUpdated: root.fanState = value
-  }
-  Timer { id: fanLockout;
-  interval: 5000; onTriggered: root._fanChanging = false }
-
-  function toggleFan() {
-    root._fanChanging = true;
-    fanLockout.restart()
-    var next = (root.fanState === "auto") ? "low"
-             : (root.fanState === "low")  ? "med"
-             : (root.fanState === "med")  ? "max" : "auto"
-    root.fanState = next
-    Lib.Shell.det("sudo /usr/local/bin/set-fan-speed " + next)
-  }
-  function getFanLabel() { return root.fanState.charAt(0).toUpperCase() + root.fanState.slice(1) }
-  function getFanColor() {
-    if (root.fanState === "auto") return root.theme ? root.theme.accent : "#a7c080"
-    if (root.fanState === "low")  return root.theme ? root.theme.textPrimary : "#d3c6aa"
-    if (root.fanState === "med")  return root.theme ? root.theme.accentSlider2 : "#f1af97"
-    return root.theme ? root.theme.accentRed : "#e67e80"
-  }
-
-  // --------------------------------------------------------------------------------------------------------------
   // DND
   Lib.CommandPoll {
     id: dndPoll;
@@ -233,17 +195,7 @@ Lib.Card {
       }
 
   
-      // 4. Fan speed
-      FitButton {
-        icon: "fan.svg"
-        label: root.getFanLabel()
-        active: root.fanState !== "auto"
-        customIconColor: root.getFanColor()
-        hasCustomColor: true
-        onClicked: root.toggleFan()
-      }
-
-      // 5. DND
+      // 4. DND
       FitButton {
         icon: root.dnd ?
         "silent.svg" : "notify.svg"

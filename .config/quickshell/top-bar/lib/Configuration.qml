@@ -86,6 +86,27 @@ Scope {
         }))
         _writeKittyAccent()
         _writeWeatherOverride()
+        _writeGtkAccent()
+    }
+
+    // Push the accent into GTK apps via a small override stylesheet, imported
+    // last from both gtk.css files (their existing content already ends with
+    // "@import noctalia.css", so an import appended after that wins the
+    // cascade). Only touches this one file -- never rewrites gtk.css itself
+    // beyond ensuring the import line exists once.
+    function _writeGtkAccent() {
+        var hex = root.useCustomColors ? String(root.customAccent) : "#a7c080"
+        var css = "@define-color accent_color " + hex + ";\n" +
+                   "@define-color accent_bg_color " + hex + ";\n" +
+                   "@define-color theme_selected_bg_color " + hex + ";\n" +
+                   "@define-color theme_unfocused_selected_bg_color " + hex + ";\n"
+        Quickshell.execDetached(["bash", "-c",
+            "mkdir -p ~/.local/state/theme; cat > ~/.local/state/theme/gtk_accent.css << 'EOF'\n" + css + "EOF\n" +
+            "IMPORT='@import url(\"file://'\"$HOME\"'/.local/state/theme/gtk_accent.css\");'\n" +
+            "for f in ~/.config/gtk-3.0/gtk.css ~/.config/gtk-4.0/gtk.css; do\n" +
+            "  [ -f \"$f\" ] || touch \"$f\"\n" +
+            "  grep -qF 'gtk_accent.css' \"$f\" || printf '\\n%s\\n' \"$IMPORT\" >> \"$f\"\n" +
+            "done"])
     }
 
     // Push weather creds into the file weather.sh sources, so the shell
@@ -146,6 +167,6 @@ Scope {
         id: configFile
         path: root.configPath
         preload: true
-        onLoaded: { root.load(); root._writeKittyAccent(); root._writeWeatherOverride() }
+        onLoaded: { root.load(); root._writeKittyAccent(); root._writeWeatherOverride(); root._writeGtkAccent() }
     }
 }

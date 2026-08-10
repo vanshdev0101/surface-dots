@@ -244,7 +244,7 @@ Item {
                     Item { Layout.fillWidth: true }
                     SBtn { label: "→ Top-bar layout"; accent: true
                         onTriggered: Quickshell.execDetached(["bash","-c",
-                            "pkill -f '^qs -c'; sleep 0.5; setsid qs -c top-bar >/dev/null 2>&1 & disown"])
+                            "setsid qs -c top-bar >/dev/null 2>&1 & disown; sleep 0.5; pkill -f '^qs -c task-bar'"])
                     }
                 }
                 SDivider {}

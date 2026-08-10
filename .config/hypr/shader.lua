@@ -227,4 +227,4 @@ hl.bind(mod .. " + N",       function() M.toggle("Night Light")  end, { descript
 hl.bind(alt .. " + C",       function() M.toggle("CRT Mode")     end, { description = "Toggle CRT Mode"        })
 hl.bind(mod .. " + ALT + S", function() M.turn_off_all()         end, { description = "Turn off all shaders"   })
 
-return 
+return M 

@@ -46,15 +46,15 @@ PanelWindow {
         onFileChanged: reload()
         onLoadFailed: root.isDarkMode = true
     }
-    readonly property color cCard:   isDarkMode ? "#282c2d" : "#c1c3ae"
-    readonly property color cItem:   isDarkMode ? "#323738" : "#b3b59e"
-    readonly property color cItemHv: isDarkMode ? "#3c4243" : "#a5a891"
+    readonly property color cCard:   isDarkMode ? "#282c2d" : "#F0ECE6"
+    readonly property color cItem:   isDarkMode ? "#323738" : "#cb97a382"
+    readonly property color cItemHv: isDarkMode ? "#3c4243" : "#e697a382"
     readonly property color cFg:     isDarkMode ? "#D3C6AA" : "#1e2326"
     readonly property color cMuted:  isDarkMode ? "#859289" : "#4d6049"
     readonly property color cBorder: isDarkMode ? "#d4708154" : "#d4586a3c"
     readonly property color cGreen:  isDarkMode ? "#A7C080" : "#576830"
     readonly property color cRed:    isDarkMode ? "#E67E80" : "#b13c3a"
-    readonly property int   cRadius: 14
+    readonly property int   cRadius: 10
     readonly property string fontText: "Inter"
     readonly property string fontIcon: "JetBrainsMono Nerd Font"
 
@@ -172,10 +172,11 @@ PanelWindow {
         id: card
         width: 340
         height: Math.ceil(mainLayout.implicitHeight + 24)
+        // taskbar sits at the bottom, so the popup rises from the bottom-right
         anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.rightMargin: 14
-        anchors.topMargin: 52
+        anchors.bottom: parent.bottom
+        anchors.rightMargin: 10
+        anchors.bottomMargin: 48
         color: cCard
         radius: cRadius
         border.width: 1
@@ -271,7 +272,7 @@ PanelWindow {
 
                         Layout.fillWidth: true
                         height: 44
-                        radius: 10
+                        radius: 8
                         color: rowHov.hovered ? root.cItemHv : root.cItem
 
                         RowLayout {

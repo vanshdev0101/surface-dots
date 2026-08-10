@@ -180,7 +180,7 @@ Lib.Card {
         
         onClicked: toggleBt()
         onRightClicked: { root.closeRequested();
-        Lib.Shell.det("blueman-manager >/dev/null 2>&1 &") }
+        Lib.Shell.det("quickshell -p ~/.config/quickshell/task-bar/lib/BluetoothMenu.qml") }
       }
 
       // 3. Performance

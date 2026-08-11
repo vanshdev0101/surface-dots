@@ -55,6 +55,24 @@ Item {
         Lib.Configuration.useCustomColors = true
         Lib.Configuration.save()
     }
+
+    // Set the desktop wallpaper directly via awww instead of papel's socket
+    // "apply:" message -- papel hardcodes `awww img <path>` with no --resize/
+    // --crop-gravity flags (always crop+center), so there's no way to honor
+    // a user-picked fit mode through it. Calling awww ourselves is the only
+    // way to actually control that without rebuilding papel from source.
+    function applyWallpaperFile(path) {
+        var args = ["awww", "img", path,
+            "--resize", Lib.Configuration.wallpaperFit,
+            "--transition-type", "wipe",
+            "--transition-pos", "center",
+            "--transition-step", "90",
+            "--transition-duration", "1.2"]
+        if (Lib.Configuration.wallpaperFit === "crop") {
+            args.push("--crop-gravity", Lib.Configuration.wallpaperGravity)
+        }
+        Quickshell.execDetached(args)
+    }
     property QtObject theme: null
     // When false (during the open/close animation) the per-thumbnail blur/mask
     // layers are dropped so the heavy effects don't re-render every frame of the
@@ -79,8 +97,7 @@ Item {
         root.appliedFullPath  = item.full_path
         root.appliedThumbPath = item.thumb_path
         root.appliedFileName  = item.file_name
-        backend.write("apply:" + item.full_path + "\n")
-        backend.flush()
+        applyWallpaperFile(item.full_path)
         root.triggerToast(item.file_name)
         // The Canvas-based extractor below only paints while this panel is
         // part of a visible scene graph (Qt Quick doesn't run onPaint for an
@@ -240,6 +257,84 @@ Item {
             }
         }
 
+        // Fit mode: how awww scales the image onto the screen. Re-applies
+        // the currently-set wallpaper immediately so the change is visible
+        // without needing to click a thumbnail again.
+        RowLayout {
+            Layout.fillWidth: true; spacing: 4
+
+            component FitBtn: Rectangle {
+                id: fb
+                property string mode: ""
+                property string label: ""
+                readonly property bool active: Lib.Configuration.wallpaperFit === mode
+                Layout.fillWidth: true
+                height: 26; radius: 6
+                color: active ? root.rAccent : (fbHov.hovered ? root.rItem : "transparent")
+                Behavior on color { ColorAnimation { duration: 120 } }
+                border.width: 1
+                border.color: active ? "transparent" : root.rOutline
+                Text {
+                    anchors.centerIn: parent
+                    text: fb.label
+                    font.family: root.rFont; font.pixelSize: 11
+                    font.weight: fb.active ? 700 : 400
+                    color: fb.active ? (root.rDark ? "#232a2e" : "#f0f2d4") : root.rMuted
+                }
+                HoverHandler { id: fbHov; cursorShape: Qt.PointingHandCursor }
+                TapHandler {
+                    onTapped: {
+                        Lib.Configuration.wallpaperFit = fb.mode
+                        Lib.Configuration.save()
+                        if (root.appliedFullPath !== "") root.applyWallpaperFile(root.appliedFullPath)
+                    }
+                }
+            }
+
+            FitBtn { mode: "crop";    label: "Fill" }
+            FitBtn { mode: "fit";     label: "Fit" }
+            FitBtn { mode: "stretch"; label: "Stretch" }
+            FitBtn { mode: "no";      label: "Center" }
+        }
+
+        // Crop anchor -- only meaningful in Fill mode
+        RowLayout {
+            Layout.fillWidth: true; spacing: 4
+            visible: Lib.Configuration.wallpaperFit === "crop"
+
+            component GravityBtn: Rectangle {
+                id: gb
+                property string mode: ""
+                property string label: ""
+                readonly property bool active: Lib.Configuration.wallpaperGravity === mode
+                Layout.fillWidth: true
+                height: 22; radius: 5
+                color: active ? Qt.rgba(root.rAccent.r, root.rAccent.g, root.rAccent.b, 0.18) : "transparent"
+                Behavior on color { ColorAnimation { duration: 120 } }
+                Text {
+                    anchors.centerIn: parent
+                    text: gb.label
+                    font.family: root.rFont; font.pixelSize: 9
+                    font.weight: gb.active ? 700 : 400
+                    color: gb.active ? root.rAccent : root.rMuted
+                }
+                HoverHandler { id: gbHov; cursorShape: Qt.PointingHandCursor }
+                TapHandler {
+                    onTapped: {
+                        Lib.Configuration.wallpaperGravity = gb.mode
+                        Lib.Configuration.save()
+                        if (root.appliedFullPath !== "") root.applyWallpaperFile(root.appliedFullPath)
+                    }
+                }
+            }
+
+            GravityBtn { mode: "top";    label: "Top" }
+            GravityBtn { mode: "center"; label: "Center" }
+            GravityBtn { mode: "bottom"; label: "Bottom" }
+            GravityBtn { mode: "left";   label: "Left" }
+            GravityBtn { mode: "right";  label: "Right" }
+        }
+
         Rectangle { Layout.fillWidth: true; height: 1; color: root.rOutline; opacity: 0.5 }
 
         // Grid
@@ -299,8 +394,7 @@ Item {
                                 root.appliedFullPath  = model.full_path
                                 root.appliedThumbPath = model.thumb_path
                                 root.appliedFileName  = model.file_name
-                                backend.write("apply:" + model.full_path + "\n")
-                                backend.flush()
+                                applyWallpaperFile(model.full_path)
                                 root.triggerToast("wallpaper applied")
                                 paletteCanvas.extractFrom(model.thumb_path)
                             }

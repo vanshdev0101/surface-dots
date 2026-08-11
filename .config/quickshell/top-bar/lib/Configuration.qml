@@ -15,6 +15,11 @@ Scope {
     // Empty = use the bundled default artwork
     property string powerMenuBgImage: ""
 
+    // How awww scales the wallpaper onto the screen: crop|fit|stretch|no
+    property string wallpaperFit: "crop"
+    // Only meaningful when wallpaperFit === "crop"
+    property string wallpaperGravity: "center"
+
     // Power menu skin: "life" (default) or "cassini". Accents are per-skin,
     // per-theme-mode -- empty string means "use the skin's built-in default".
     property string powerMenuStyle:          "life"
@@ -67,6 +72,8 @@ Scope {
             customAccent:         String(root.customAccent),
             customBg:             String(root.customBg),
             powerMenuBgImage:     root.powerMenuBgImage,
+            wallpaperFit:         root.wallpaperFit,
+            wallpaperGravity:     root.wallpaperGravity,
             powerMenuStyle:              root.powerMenuStyle,
             powerMenuLifeAccentDark:     root.powerMenuLifeAccentDark,
             powerMenuLifeAccentLight:    root.powerMenuLifeAccentLight,
@@ -142,6 +149,8 @@ Scope {
             if (d.customAccent     !== undefined) root.customAccent     = d.customAccent
             if (d.customBg         !== undefined) root.customBg         = d.customBg
             if (d.powerMenuBgImage     !== undefined) root.powerMenuBgImage     = d.powerMenuBgImage
+            if (d.wallpaperFit         !== undefined) root.wallpaperFit         = d.wallpaperFit
+            if (d.wallpaperGravity     !== undefined) root.wallpaperGravity     = d.wallpaperGravity
             if (d.powerMenuStyle              !== undefined) root.powerMenuStyle              = d.powerMenuStyle
             if (d.powerMenuLifeAccentDark     !== undefined) root.powerMenuLifeAccentDark     = d.powerMenuLifeAccentDark
             if (d.powerMenuLifeAccentLight    !== undefined) root.powerMenuLifeAccentLight    = d.powerMenuLifeAccentLight

@@ -12,7 +12,7 @@ Lib.Card {
   property bool autoMode: true
   property bool dnd: false
   
-  Component.onCompleted: { if (root.autoMode) Lib.Shell.det("sudo auto-cpufreq --force=reset") }
+  Component.onCompleted: { if (root.autoMode) Lib.Shell.det("sudo -n auto-cpufreq --force=reset") }
 
 
   // --------------------------------------------------------------------------------------------------------------
@@ -106,11 +106,11 @@ Lib.Card {
     root._isChanging = true;
     pollLockout.restart()
     if (root.autoMode) { root.autoMode = false; root.cpuGov = "performance";
-    Lib.Shell.det("sudo auto-cpufreq --force=performance") }
+    Lib.Shell.det("sudo -n auto-cpufreq --force=performance") }
     else if (root.cpuGov === "performance") { root.cpuGov = "powersave";
-    Lib.Shell.det("sudo auto-cpufreq --force=powersave") }
+    Lib.Shell.det("sudo -n auto-cpufreq --force=powersave") }
     else { root.autoMode = true;
-    Lib.Shell.det("sudo auto-cpufreq --force=reset") }
+    Lib.Shell.det("sudo -n auto-cpufreq --force=reset") }
   }
   function getPerfIcon() { return root.autoMode ?
   "cpu_auto.svg" : (root.cpuGov === "performance" ? "cpu_max.svg" : "cpu_powersave.svg") }

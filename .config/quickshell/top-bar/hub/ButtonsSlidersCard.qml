@@ -12,7 +12,7 @@ Lib.Card {
   property bool autoMode: true
   Component.onCompleted: {
         if (root.autoMode) {
-            det("sudo auto-cpufreq --force=reset")
+            det("sudo -n auto-cpufreq --force=reset")
         }
     }
 
@@ -133,15 +133,15 @@ Lib.Card {
       // Auto -> Force Performance
       root.autoMode = false
       root.cpuGov = "performance"
-      det("sudo auto-cpufreq --force=performance")
+      det("sudo -n auto-cpufreq --force=performance")
     } else if (root.cpuGov === "performance") {
       // Performance -> Force Powersave
       root.cpuGov = "powersave"
-      det("sudo auto-cpufreq --force=powersave")
+      det("sudo -n auto-cpufreq --force=powersave")
     } else {
       // Powersave -> Auto (Reset)
       root.autoMode = true
-      det("sudo auto-cpufreq --force=reset")
+      det("sudo -n auto-cpufreq --force=reset")
     }
   }
 

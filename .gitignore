@@ -4,3 +4,6 @@
 .config/quickshell/**/usersettings.json
 .config/quickshell/**/errors.log
 .config/quickshell/weather_api.conf
+
+# local backups of configs being replaced, not part of the dotfiles
+.config/**/*.old/

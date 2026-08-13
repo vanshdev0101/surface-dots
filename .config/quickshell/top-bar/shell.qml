@@ -98,6 +98,11 @@ ShellRoot {
                 screen: v.modelData
             }
 
+            Bar.Dock {
+                id: dock
+                screen: v.modelData
+            }
+
             Lib.BrightnessOSD {
                 id: brightnessOsd
                 theme: screenTheme

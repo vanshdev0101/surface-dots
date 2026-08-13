@@ -131,6 +131,20 @@ Item {
                 RowLayout {
                     Layout.fillWidth: true; spacing: 8
                     SBtn { label: "Reset colors"; onTriggered: { Lib.Configuration.useCustomColors = false; Lib.Configuration.save() } }
+                    SBtn {
+                        label: "Monochrome"
+                        onTriggered: {
+                            // Pure zero-saturation grays -- every role ThemeEngine
+                            // derives from customAccent/customBg (backgrounds, text,
+                            // secondary accents) inherits that zero saturation, so
+                            // the whole UI comes out black/white/gray with no other
+                            // wiring needed.
+                            Lib.Configuration.customBg = "#121212"
+                            Lib.Configuration.customAccent = "#e8e8e8"
+                            Lib.Configuration.useCustomColors = true
+                            Lib.Configuration.save()
+                        }
+                    }
                     Item { Layout.fillWidth: true }
                     SBtn { label: "Wallpaper"; accent: true; onTriggered: root.wallpaperRequested() }
                 }

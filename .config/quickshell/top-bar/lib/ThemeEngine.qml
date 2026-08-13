@@ -13,7 +13,7 @@ QtObject {
     readonly property int    btnH:        54
     readonly property int    sliderH:     24
     readonly property string textFont:    "Manrope"
-    readonly property string iconFont:    "JetBrainsMono Nerd Font"
+    readonly property string iconFont:    "Symbols Nerd Font"
 
     // 1) Surfaces 
     readonly property color bgPanel:     isDarkMode ? Qt.rgba(20/255, 23/255, 25/255, 0.88)
@@ -50,7 +50,9 @@ QtObject {
         ? Qt.hsla(accent.hslHue, Math.min(0.12, accent.hslSaturation * 0.25), _bgIsDark ? 0.68 : 0.32, 1.0)
         : (isDarkMode ? "#9da9a0" : "#232a23")
     readonly property color textOnAccent:  Configuration.useCustomColors
-        ? (accent.hslLightness > 0.55 ? Qt.hsla(accent.hslHue, 0.25, 0.12, 1.0) : Qt.hsla(accent.hslHue, 0.15, 0.92, 1.0))
+        ? (accent.hslLightness > 0.55
+            ? Qt.hsla(accent.hslHue, Math.min(0.25, accent.hslSaturation), 0.12, 1.0)
+            : Qt.hsla(accent.hslHue, Math.min(0.15, accent.hslSaturation), 0.92, 1.0))
         : (isDarkMode ? "#232a2e" : "#f0f2d4")
     readonly property color textOSD:       isDarkMode ? '#a7b3aa' : '#5f7b5f'
 

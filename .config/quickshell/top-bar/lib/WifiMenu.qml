@@ -5,6 +5,7 @@ import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import "." as Lib
 
 PanelWindow {
     id: root
@@ -96,15 +97,26 @@ PanelWindow {
     }
 
     // -------- Colors / Fonts --------
-    readonly property color cBg:      isDarkMode ? "#6b3f443c" : "#97a382"
-    readonly property color cBgAlt:   isDarkMode ? '#6b3f443c' : '#97a382'
-    readonly property color cCard:    isDarkMode ? "#282c2d" : "#c1c3ae"
-    readonly property color cFg:      isDarkMode ? "#D3C6AA" : "#1e2326"
-    readonly property color cMuted:   isDarkMode ? "#859289" : '#4d6049'
-    readonly property color cBorder:  isDarkMode ? '#d4708154' : '#d4586a3c'
-    readonly property color cGreen:   isDarkMode ? "#A7C080" : "#576830"
+    // Same cascade ThemeEngine.qml uses for the Hub/Bar/Dock: every role
+    // derives from customBg/customAccent's own hue+saturation, so a
+    // wallpaper-derived accent (or the Monochrome preset, which is just
+    // zero-saturation customBg/customAccent) reaches this menu too instead
+    // of it being stuck on a fixed palette.
+    readonly property bool  useCustom: Lib.Configuration.useCustomColors
+    readonly property color _bg:  Lib.Configuration.customBg
+    readonly property color _acc: Lib.Configuration.customAccent
+    readonly property bool  _bgIsDark: _bg.hslLightness < 0.5
+    function _clampL(v) { return Math.max(0, Math.min(1, v)) }
+
+    readonly property color cBg:      useCustom ? Qt.hsla(_bg.hslHue, _bg.hslSaturation, _bg.hslLightness, 0.42) : (isDarkMode ? "#6b3f443c" : "#97a382")
+    readonly property color cBgAlt:   cBg
+    readonly property color cCard:    useCustom ? Qt.hsla(_bg.hslHue, _bg.hslSaturation, _clampL(_bg.hslLightness + (_bgIsDark ? 0.04 : -0.05)), 1.0) : (isDarkMode ? "#282c2d" : "#c1c3ae")
+    readonly property color cFg:      useCustom ? Qt.hsla(_acc.hslHue, Math.min(0.18, _acc.hslSaturation * 0.35), _bgIsDark ? 0.88 : 0.18, 1.0) : (isDarkMode ? "#D3C6AA" : "#1e2326")
+    readonly property color cMuted:   useCustom ? Qt.hsla(_acc.hslHue, Math.min(0.12, _acc.hslSaturation * 0.25), _bgIsDark ? 0.68 : 0.32, 1.0) : (isDarkMode ? "#859289" : '#4d6049')
+    readonly property color cBorder:  useCustom ? Qt.rgba(_acc.r, _acc.g, _acc.b, 0.5) : (isDarkMode ? '#d4708154' : '#d4586a3c')
+    readonly property color cGreen:   useCustom ? _acc : (isDarkMode ? "#A7C080" : "#576830")
     readonly property color cRed:     isDarkMode ? "#E67E80" : '#b13c3a'
-    readonly property color cBlue:    isDarkMode ? '#A7C080' : '#5c7267'
+    readonly property color cBlue:    useCustom ? Qt.hsla((_acc.hslHue - 0.06 + 1.0) % 1.0, _acc.hslSaturation, _clampL(_acc.hslLightness + (_bgIsDark ? 0.05 : -0.10)), 1.0) : (isDarkMode ? '#A7C080' : '#5c7267')
     readonly property int   cRadius: 14
 
     readonly property string fontText: "Inter"

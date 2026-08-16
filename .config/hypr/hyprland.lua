@@ -65,6 +65,8 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hypridle")
     hl.exec_cmd("dunst")
     hl.exec_cmd("blueman-applet")
+    hl.exec_cmd("easyeffects --hide-window")
+    hl.exec_cmd("env APPTRACKER_START_HIDDEN=1 qs -p " .. home .. "/apptracker")
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
     shader.toggle("Main")
@@ -233,6 +235,7 @@ hl.bind(mod .. " + C", hl.dsp.exec_cmd("bash -c 'pkill -x rofi || { [ \"$(cat ~/
 hl.bind(mod .. " + SLASH", hl.dsp.exec_cmd("bash -c 'hyprctl layers | grep -q keybinds-cheat && pkill -f \"quickshell -p.*keybinds-cheatsheet\" || quickshell -p " .. home .. "/.config/quickshell/keybinds-cheatsheet/Main.qml'"))  -- Keybinds cheat sheet
 hl.bind(mod .. " + SHIFT + W", hl.dsp.global("quickshell:nextWallpaper")) -- Next wallpaper
 hl.bind(mod .. " + SHIFT + Q", hl.dsp.global("quickshell:prevWallpaper")) -- Previous wallpaper
+hl.bind(mod .. " + SHIFT + T", hl.dsp.exec_cmd("qs -p " .. home .. "/apptracker ipc call tracker toggle")) -- Job application tracker widget
 
 -- Apps
 hl.bind(mod .. " + Q", hl.dsp.window.close())

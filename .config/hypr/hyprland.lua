@@ -15,7 +15,7 @@ local shader = require("shader")
 -- =========================================================================
 hl.monitor({
     output   = "eDP-1",
-    mode     = "2560x1440@60",
+    mode     = "2560x1440@165",
     position = "0x0",
     scale    = 1.6,
     bitdepth = 10
@@ -65,7 +65,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hypridle")
     hl.exec_cmd("dunst")
     hl.exec_cmd("blueman-applet")
-    hl.exec_cmd("easyeffects --hide-window")
     hl.exec_cmd("env APPTRACKER_START_HIDDEN=1 qs -p " .. home .. "/apptracker")
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
@@ -315,15 +314,19 @@ hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true })
 -- =========================================================================
 -- Lid Switch
 -- =========================================================================
--- switch:off = lid OPEN, switch:on = lid CLOSED
+-- Hyprland's switch:on/switch:off <-> lid-closed/lid-open mapping isn't
+-- reliable across hardware, so both bind to the same script, which reads
+-- the real kernel ACPI lid state (/proc/acpi/button/lid) instead of
+-- trusting which bind fired. Closed + external monitor connected: fully
+-- disable eDP-1 (not just dpms-blank, which would leave the internal
+-- panel occupying layout/workspace space). Closed with no external:
+-- dpms off. Open: restore eDP-1 and dpms on.
 hl.bind("switch:off:Lid Switch", function()
-    hl.timer(function()
-        hl.exec_cmd("hyprctl dispatch dpms on")
-    end, { timeout = 500, type = "oneshot" })
+    hl.exec_cmd(scripts .. "/lid-switch.sh")
 end, { locked = true })
 
 hl.bind("switch:on:Lid Switch", function()
-    hl.exec_cmd("hyprctl dispatch dpms off")
+    hl.exec_cmd(scripts .. "/lid-switch.sh")
 end, { locked = true })
 
 -- =========================================================================

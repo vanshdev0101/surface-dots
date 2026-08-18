@@ -12,7 +12,7 @@ if [ "$state" = "closed" ]; then
         hyprctl dispatch dpms off
     fi
 else
-    hyprctl eval "hl.monitor({output = 'eDP-1', mode = '2560x1440@165', position = '0x0', scale = 1.6, bitdepth = 10, disabled = false})"
+    hyprctl eval "hl.monitor({output = 'eDP-1', mode = '2560x1440@165', position = '1920x0', scale = 1.6, bitdepth = 10, disabled = false})"
     sleep 0.5
     hyprctl dispatch dpms on
 fi

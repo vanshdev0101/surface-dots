@@ -14,18 +14,18 @@ local shader = require("shader")
 -- Monitors
 -- =========================================================================
 hl.monitor({
-    output   = "eDP-1",
-    mode     = "2560x1440@165",
+    output   = "HDMI-A-1",
+    mode     = "1920x1080@144",
     position = "0x0",
-    scale    = 1.6,
-    bitdepth = 10
+    scale    = 1
 })
 
 hl.monitor({
-    output   = "HDMI-A-1",
-    mode     = "1920x1080@144",
-    position = "1600x0",
-    scale    = 1
+    output   = "eDP-1",
+    mode     = "2560x1440@165",
+    position = "1920x0",
+    scale    = 1.6,
+    bitdepth = 10
 })
 
 
@@ -76,8 +76,8 @@ end)
 -- =========================================================================
 -- Workspace Rules
 -- =========================================================================
-for i = 1, 5  do hl.workspace_rule({ workspace = tostring(i), monitor = "eDP-1" }) end
-for i = 6, 10 do hl.workspace_rule({ workspace = tostring(i), monitor = "HDMI-A-1" }) end
+for i = 1, 5  do hl.workspace_rule({ workspace = tostring(i), monitor = "HDMI-A-1" }) end
+for i = 6, 10 do hl.workspace_rule({ workspace = tostring(i), monitor = "eDP-1" }) end
 
 -- =========================================================================
 -- Core Config
